@@ -232,6 +232,7 @@ var Game = function(stage) {
 					break;
 				}
 			}
+			pickedNumbers.push(num);
 			var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 16777215, align : "center"});
 			this.texts.push(text);
 			stage.addChild(text);
