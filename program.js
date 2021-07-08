@@ -7,298 +7,308 @@ function $extend(from, fields) {
 	return proto;
 }
 var Game = function(stage) {
+	this.initiated = false;
 	this.d = 50;
 	this.texts = [];
 	this.circles = [];
+	this.loader = new PIXI.Loader();
+	this.loader.add("imgs/blitzy.png").load($bind(this,this.setup));
 	this.stage = stage;
-	this.objSize = 0.8 * this.d | 0;
-	this.space = new nape_space_Space(new nape_geom_Vec2(0,300));
-	var linesCb = new nape_callbacks_CbType();
-	var platformCb = new nape_callbacks_CbType();
-	var objCb = new nape_callbacks_CbType();
-	var boundingsCb = new nape_callbacks_CbType();
-	var groundCb = new nape_callbacks_CbType();
-	var _this = this.space.zpp_inner.wrap_listeners;
-	if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var obj = new nape_callbacks_PreListener(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,linesCb,platformCb,function(_) {
-		if(zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE == null) {
-			zpp_$nape_util_ZPP_$Flags.internal = true;
-			zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE = new nape_callbacks_PreFlag();
-			zpp_$nape_util_ZPP_$Flags.internal = false;
-		}
-		return zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE;
-	},0,true);
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(obj);
-	} else {
-		_this.unshift(obj);
-	}
-	var _this = this.space.zpp_inner.wrap_listeners;
-	if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var obj = new nape_callbacks_PreListener(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,linesCb,objCb,function(_) {
-		if(zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE == null) {
-			zpp_$nape_util_ZPP_$Flags.internal = true;
-			zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE = new nape_callbacks_PreFlag();
-			zpp_$nape_util_ZPP_$Flags.internal = false;
-		}
-		return zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE;
-	},0,true);
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(obj);
-	} else {
-		_this.unshift(obj);
-	}
-	var _this = this.space.zpp_inner.wrap_listeners;
-	if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var obj = new nape_callbacks_PreListener(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,boundingsCb,objCb,function(_) {
-		if(zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE == null) {
-			zpp_$nape_util_ZPP_$Flags.internal = true;
-			zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE = new nape_callbacks_PreFlag();
-			zpp_$nape_util_ZPP_$Flags.internal = false;
-		}
-		return zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE;
-	},0,true);
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(obj);
-	} else {
-		_this.unshift(obj);
-	}
-	var _this = this.space.zpp_inner.wrap_listeners;
-	if(zpp_$nape_util_ZPP_$Flags.CbEvent_BEGIN == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.CbEvent_BEGIN = new nape_callbacks_CbEvent();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var obj = zpp_$nape_util_ZPP_$Flags.CbEvent_BEGIN;
-	if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var obj1 = new nape_callbacks_InteractionListener(obj,zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,objCb,groundCb,$bind(this,this.onWin));
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(obj1);
-	} else {
-		_this.unshift(obj1);
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1000,1,500,500);
-	var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-	if(_this1.zpp_inner_i.wrap_cbTypes == null) {
-		_this1.zpp_inner_i.setupcbTypes();
-	}
-	var _this = _this1.zpp_inner_i.wrap_cbTypes;
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(groundCb);
-	} else {
-		_this.unshift(groundCb);
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,249,250);
-	var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-	if(_this1.zpp_inner_i.wrap_cbTypes == null) {
-		_this1.zpp_inner_i.setupcbTypes();
-	}
-	var _this = _this1.zpp_inner_i.wrap_cbTypes;
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(boundingsCb);
-	} else {
-		_this.unshift(boundingsCb);
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,250 + 5 * (this.d + 1) + 1,250);
-	var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-	if(_this1.zpp_inner_i.wrap_cbTypes == null) {
-		_this1.zpp_inner_i.setupcbTypes();
-	}
-	var _this = _this1.zpp_inner_i.wrap_cbTypes;
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(boundingsCb);
-	} else {
-		_this.unshift(boundingsCb);
-	}
-	this.borderHeight = 2 * this.d;
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	this.leftBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,245,500 + (-4. * this.d | 0));
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	this.rightBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,250 + 5 * (this.d + 1) + 5,500 + (-4. * this.d | 0));
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + (this.d + 1),500 - (2.5 * this.d | 0));
-	var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
-	if(_this.zpp_inner_i.wrap_cbTypes == null) {
-		_this.zpp_inner_i.setupcbTypes();
-	}
-	var _this1 = _this.zpp_inner_i.wrap_cbTypes;
-	if(_this1.zpp_inner.reverse_flag) {
-		_this1.push(linesCb);
-	} else {
-		_this1.unshift(linesCb);
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 2 * (this.d + 1),500 - (2.5 * this.d | 0));
-	var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
-	if(_this.zpp_inner_i.wrap_cbTypes == null) {
-		_this.zpp_inner_i.setupcbTypes();
-	}
-	var _this1 = _this.zpp_inner_i.wrap_cbTypes;
-	if(_this1.zpp_inner.reverse_flag) {
-		_this1.push(linesCb);
-	} else {
-		_this1.unshift(linesCb);
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 3 * (this.d + 1),500 - (2.5 * this.d | 0));
-	var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
-	if(_this.zpp_inner_i.wrap_cbTypes == null) {
-		_this.zpp_inner_i.setupcbTypes();
-	}
-	var _this1 = _this.zpp_inner_i.wrap_cbTypes;
-	if(_this1.zpp_inner.reverse_flag) {
-		_this1.push(linesCb);
-	} else {
-		_this1.unshift(linesCb);
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 4 * (this.d + 1),500 - (2.5 * this.d | 0));
-	var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
-	if(_this.zpp_inner_i.wrap_cbTypes == null) {
-		_this.zpp_inner_i.setupcbTypes();
-	}
-	var _this1 = _this.zpp_inner_i.wrap_cbTypes;
-	if(_this1.zpp_inner.reverse_flag) {
-		_this1.push(linesCb);
-	} else {
-		_this1.unshift(linesCb);
-	}
-	var pickedNumbers = [];
-	var _g = 0;
-	while(_g < 5) {
-		var i = _g++;
-		var _g1 = 0;
-		while(_g1 < 5) {
-			this.addCircle(250 + ((0.5 + i) * (this.d + 1) | 0),500 - ((0.5 + _g1++) * this.d | 0),this.d * 0.5 | 0);
-			var num = 0;
-			while(true) {
-				num = i * 15 + Std.random(15) + 1;
-				if(pickedNumbers.indexOf(num) == -1) {
-					break;
-				}
-			}
-			pickedNumbers.push(num);
-			var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 16777215, align : "center"});
-			this.texts.push(text);
-			stage.addChild(text);
-		}
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	this.platform = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,5 * (this.d + 1),10,250 + (2.5 * (this.d + 1) | 0),500 - 5 * this.d - 5);
-	var _this = this.platform;
-	var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-	if(_this1.zpp_inner_i.wrap_cbTypes == null) {
-		_this1.zpp_inner_i.setupcbTypes();
-	}
-	var _this = _this1.zpp_inner_i.wrap_cbTypes;
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(platformCb);
-	} else {
-		_this.unshift(platformCb);
-	}
-	var _this = this.platform.zpp_inner.material.wrapper();
-	if(0 != _this.zpp_inner.dynamicFriction) {
-		_this.zpp_inner.dynamicFriction = 0.;
-		_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ANGDRAG | zpp_$nape_phys_ZPP_$Material.ARBITERS);
-	}
-	var _this = this.platform.zpp_inner.material.wrapper();
-	if(0 != _this.zpp_inner.staticFriction) {
-		_this.zpp_inner.staticFriction = 0.;
-		_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ARBITERS);
-	}
-	if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
-		zpp_$nape_util_ZPP_$Flags.internal = true;
-		zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC = new nape_phys_BodyType();
-		zpp_$nape_util_ZPP_$Flags.internal = false;
-	}
-	this.obj = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,this.objSize,this.objSize,250 + (2.5 * (this.d + 1) | 0),500 - (6.5 * this.d | 0) - 10);
-	var _this = this.obj;
-	var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-	if(_this1.zpp_inner_i.wrap_cbTypes == null) {
-		_this1.zpp_inner_i.setupcbTypes();
-	}
-	var _this = _this1.zpp_inner_i.wrap_cbTypes;
-	if(_this.zpp_inner.reverse_flag) {
-		_this.push(objCb);
-	} else {
-		_this.unshift(objCb);
-	}
-	var _this = this.obj.zpp_inner.material.wrapper();
-	if(0 != _this.zpp_inner.dynamicFriction) {
-		_this.zpp_inner.dynamicFriction = 0.;
-		_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ANGDRAG | zpp_$nape_phys_ZPP_$Material.ARBITERS);
-	}
-	var _this = this.obj.zpp_inner.material.wrapper();
-	if(0 != _this.zpp_inner.staticFriction) {
-		_this.zpp_inner.staticFriction = 0.;
-		_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ARBITERS);
-	}
-	this.bingoText = new PIXI.Text("BINGO!",{ fontFamily : "Arial", fontSize : 64, fill : 16777215, align : "center"});
-	this.bingoText.x = 250 + (2.5 * (this.d + 1) - this.bingoText.width * 0.5 | 0);
-	this.bingoText.y = 100;
 };
 Game.__name__ = true;
 Game.prototype = {
-	addCircle: function(x,y,r) {
+	setup: function() {
+		this.objSize = 0.8 * this.d | 0;
+		this.blitzy = new PIXI.Sprite(this.loader.resources["imgs/blitzy.png"].texture);
+		this.blitzy.pivot.x = 38.5;
+		this.blitzy.pivot.y = this.objSize;
+		this.stage.addChild(this.blitzy);
+		this.space = new nape_space_Space(new nape_geom_Vec2(0,300));
+		var linesCb = new nape_callbacks_CbType();
+		var platformCb = new nape_callbacks_CbType();
+		var objCb = new nape_callbacks_CbType();
+		var boundingsCb = new nape_callbacks_CbType();
+		var groundCb = new nape_callbacks_CbType();
+		var _this = this.space.zpp_inner.wrap_listeners;
+		if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var obj = new nape_callbacks_PreListener(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,linesCb,platformCb,function(_) {
+			if(zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE == null) {
+				zpp_$nape_util_ZPP_$Flags.internal = true;
+				zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE = new nape_callbacks_PreFlag();
+				zpp_$nape_util_ZPP_$Flags.internal = false;
+			}
+			return zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE;
+		},0,true);
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(obj);
+		} else {
+			_this.unshift(obj);
+		}
+		var _this = this.space.zpp_inner.wrap_listeners;
+		if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var obj = new nape_callbacks_PreListener(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,linesCb,objCb,function(_) {
+			if(zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE == null) {
+				zpp_$nape_util_ZPP_$Flags.internal = true;
+				zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE = new nape_callbacks_PreFlag();
+				zpp_$nape_util_ZPP_$Flags.internal = false;
+			}
+			return zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE;
+		},0,true);
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(obj);
+		} else {
+			_this.unshift(obj);
+		}
+		var _this = this.space.zpp_inner.wrap_listeners;
+		if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var obj = new nape_callbacks_PreListener(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,boundingsCb,objCb,function(_) {
+			if(zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE == null) {
+				zpp_$nape_util_ZPP_$Flags.internal = true;
+				zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE = new nape_callbacks_PreFlag();
+				zpp_$nape_util_ZPP_$Flags.internal = false;
+			}
+			return zpp_$nape_util_ZPP_$Flags.PreFlag_IGNORE;
+		},0,true);
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(obj);
+		} else {
+			_this.unshift(obj);
+		}
+		var _this = this.space.zpp_inner.wrap_listeners;
+		if(zpp_$nape_util_ZPP_$Flags.CbEvent_BEGIN == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.CbEvent_BEGIN = new nape_callbacks_CbEvent();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var obj = zpp_$nape_util_ZPP_$Flags.CbEvent_BEGIN;
+		if(zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION = new nape_callbacks_InteractionType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var obj1 = new nape_callbacks_InteractionListener(obj,zpp_$nape_util_ZPP_$Flags.InteractionType_COLLISION,objCb,groundCb,$bind(this,this.onWin));
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(obj1);
+		} else {
+			_this.unshift(obj1);
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1000,1,500,500);
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
+			_this1.zpp_inner_i.setupcbTypes();
+		}
+		var _this = _this1.zpp_inner_i.wrap_cbTypes;
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(groundCb);
+		} else {
+			_this.unshift(groundCb);
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,249,250);
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
+			_this1.zpp_inner_i.setupcbTypes();
+		}
+		var _this = _this1.zpp_inner_i.wrap_cbTypes;
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(boundingsCb);
+		} else {
+			_this.unshift(boundingsCb);
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,250 + 5 * (this.d + 1) + 1,250);
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
+			_this1.zpp_inner_i.setupcbTypes();
+		}
+		var _this = _this1.zpp_inner_i.wrap_cbTypes;
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(boundingsCb);
+		} else {
+			_this.unshift(boundingsCb);
+		}
+		this.borderHeight = 2 * this.d;
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		this.leftBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,245,500 + (-4. * this.d | 0) - 20);
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		this.rightBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,250 + 5 * (this.d + 1) + 5,500 + (-4. * this.d | 0) - 20);
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + (this.d + 1),500 - (2.5 * this.d | 0));
+		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
+		if(_this.zpp_inner_i.wrap_cbTypes == null) {
+			_this.zpp_inner_i.setupcbTypes();
+		}
+		var _this1 = _this.zpp_inner_i.wrap_cbTypes;
+		if(_this1.zpp_inner.reverse_flag) {
+			_this1.push(linesCb);
+		} else {
+			_this1.unshift(linesCb);
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 2 * (this.d + 1),500 - (2.5 * this.d | 0));
+		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
+		if(_this.zpp_inner_i.wrap_cbTypes == null) {
+			_this.zpp_inner_i.setupcbTypes();
+		}
+		var _this1 = _this.zpp_inner_i.wrap_cbTypes;
+		if(_this1.zpp_inner.reverse_flag) {
+			_this1.push(linesCb);
+		} else {
+			_this1.unshift(linesCb);
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 3 * (this.d + 1),500 - (2.5 * this.d | 0));
+		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
+		if(_this.zpp_inner_i.wrap_cbTypes == null) {
+			_this.zpp_inner_i.setupcbTypes();
+		}
+		var _this1 = _this.zpp_inner_i.wrap_cbTypes;
+		if(_this1.zpp_inner.reverse_flag) {
+			_this1.push(linesCb);
+		} else {
+			_this1.unshift(linesCb);
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 4 * (this.d + 1),500 - (2.5 * this.d | 0));
+		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
+		if(_this.zpp_inner_i.wrap_cbTypes == null) {
+			_this.zpp_inner_i.setupcbTypes();
+		}
+		var _this1 = _this.zpp_inner_i.wrap_cbTypes;
+		if(_this1.zpp_inner.reverse_flag) {
+			_this1.push(linesCb);
+		} else {
+			_this1.unshift(linesCb);
+		}
+		var pickedNumbers = [];
+		var _g = 0;
+		while(_g < 5) {
+			var i = _g++;
+			var _g1 = 0;
+			while(_g1 < 5) {
+				this.addCircle(250 + ((0.5 + i) * (this.d + 1) | 0),500 - ((0.5 + _g1++) * this.d | 0),this.d * 0.5 | 0);
+				var num = 0;
+				while(true) {
+					num = i * 15 + Std.random(15) + 1;
+					if(!(pickedNumbers.indexOf(num) != -1)) {
+						break;
+					}
+				}
+				pickedNumbers.push(num);
+				var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 16777215, align : "center"});
+				this.texts.push(text);
+				this.stage.addChild(text);
+			}
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		this.platform = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,5 * (this.d + 1),10,250 + (2.5 * (this.d + 1) | 0),500 - 5 * this.d - 5);
+		var _this = this.platform;
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
+			_this1.zpp_inner_i.setupcbTypes();
+		}
+		var _this = _this1.zpp_inner_i.wrap_cbTypes;
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(platformCb);
+		} else {
+			_this.unshift(platformCb);
+		}
+		var _this = this.platform.zpp_inner.material.wrapper();
+		if(0 != _this.zpp_inner.dynamicFriction) {
+			_this.zpp_inner.dynamicFriction = 0.;
+			_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ANGDRAG | zpp_$nape_phys_ZPP_$Material.ARBITERS);
+		}
+		var _this = this.platform.zpp_inner.material.wrapper();
+		if(0 != _this.zpp_inner.staticFriction) {
+			_this.zpp_inner.staticFriction = 0.;
+			_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ARBITERS);
+		}
+		if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
+			zpp_$nape_util_ZPP_$Flags.internal = true;
+			zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC = new nape_phys_BodyType();
+			zpp_$nape_util_ZPP_$Flags.internal = false;
+		}
+		this.obj = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,2 * this.objSize,this.objSize,250 + (2.5 * (this.d + 1) | 0),500 - (5.5 * this.d | 0) - 10);
+		var _this = this.obj;
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
+			_this1.zpp_inner_i.setupcbTypes();
+		}
+		var _this = _this1.zpp_inner_i.wrap_cbTypes;
+		if(_this.zpp_inner.reverse_flag) {
+			_this.push(objCb);
+		} else {
+			_this.unshift(objCb);
+		}
+		var _this = this.obj.zpp_inner.material.wrapper();
+		if(0 != _this.zpp_inner.dynamicFriction) {
+			_this.zpp_inner.dynamicFriction = 0.;
+			_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ANGDRAG | zpp_$nape_phys_ZPP_$Material.ARBITERS);
+		}
+		var _this = this.obj.zpp_inner.material.wrapper();
+		if(0 != _this.zpp_inner.staticFriction) {
+			_this.zpp_inner.staticFriction = 0.;
+			_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ARBITERS);
+		}
+		this.bingoText = new PIXI.Text("BINGO!",{ fontFamily : "Arial", fontSize : 64, fill : 16777215, align : "center"});
+		this.bingoText.x = 250 + (2.5 * (this.d + 1) - this.bingoText.width * 0.5 | 0);
+		this.bingoText.y = 100;
+		this.initiated = true;
+	}
+	,addCircle: function(x,y,r) {
 		var body = new nape_phys_Body();
 		var shape = new nape_shape_Circle(r);
 		shape.zpp_inner.immutable_midstep("Shape::body");
@@ -646,9 +656,81 @@ Game.prototype = {
 		this.stage.addChild(this.bingoText);
 	}
 	,update: function() {
+		if(!this.initiated) {
+			return;
+		}
 		this.space.step(0.016666666666666666);
 	}
+	,getPoints: function(hw,hh,pos,rad) {
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		var tmp = pos.zpp_inner.x + hw * Math.cos(rad) - hh * Math.sin(rad);
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		var tmp1 = pos.zpp_inner.y + hw * Math.sin(rad) + hh * Math.cos(rad);
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		var tmp2 = pos.zpp_inner.x - hw * Math.cos(rad) - hh * Math.sin(rad);
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		var tmp3 = pos.zpp_inner.y - hw * Math.sin(rad) + hh * Math.cos(rad);
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		var tmp4 = pos.zpp_inner.x - hw * Math.cos(rad) + hh * Math.sin(rad);
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		var tmp5 = pos.zpp_inner.y - hw * Math.sin(rad) - hh * Math.cos(rad);
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		var tmp6 = pos.zpp_inner.x + hw * Math.cos(rad) + hh * Math.sin(rad);
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		return [tmp,tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,pos.zpp_inner.y + hw * Math.sin(rad) - hh * Math.cos(rad)];
+	}
 	,render: function(graphics) {
+		if(!this.initiated) {
+			return;
+		}
 		graphics.lineStyle(1,65280,1,0.5,false);
 		var _this = this.leftBorder;
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
@@ -707,80 +789,14 @@ Game.prototype = {
 		}
 		graphics.drawRect(tmp,_this.zpp_inner.y - (0.5 * this.borderHeight | 0),10,this.borderHeight);
 		graphics.lineStyle(1,16777215,1,0.5,false);
-		var hw = 5 * (this.d + 1) * 0.5 | 0;
-		var hh = 5. | 0;
+		var w = 5 * (this.d + 1);
 		var _this = this.platform;
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner.wrap_pos == null) {
 			_this1.zpp_inner.setupPosition();
 		}
-		var pos = _this1.zpp_inner.wrap_pos;
 		var _this = this.platform;
-		var rad = (_this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null).zpp_inner.rot;
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points = pos.zpp_inner.x + hw * Math.cos(rad) - hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points1 = pos.zpp_inner.y + hw * Math.sin(rad) + hh * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points2 = pos.zpp_inner.x - hw * Math.cos(rad) - hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points3 = pos.zpp_inner.y - hw * Math.sin(rad) + hh * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points4 = pos.zpp_inner.x - hw * Math.cos(rad) + hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points5 = pos.zpp_inner.y - hw * Math.sin(rad) - hh * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points6 = pos.zpp_inner.x + hw * Math.cos(rad) + hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		graphics.drawPolygon([points,points1,points2,points3,points4,points5,points6,pos.zpp_inner.y + hw * Math.sin(rad) - hh * Math.cos(rad)]);
+		graphics.drawPolygon(this.getPoints(w * 0.5 | 0,5. | 0,_this1.zpp_inner.wrap_pos,(_this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null).zpp_inner.rot));
 		graphics.lineStyle(1,16711935,1,0.5,false);
 		var _g = 0;
 		var _g1 = this.circles.length;
@@ -850,71 +866,58 @@ Game.prototype = {
 		var pos = _this1.zpp_inner.wrap_pos;
 		var _this = this.obj;
 		var rad = (_this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null).zpp_inner.rot;
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		this.blitzy.position.x = pos.zpp_inner.x;
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		this.blitzy.position.y = pos.zpp_inner.y;
+		this.blitzy.rotation = rad;
+		var _this = this.obj;
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner.wrap_vel == null) {
+			_this1.zpp_inner.setupVelocity();
+		}
+		var _this = _this1.zpp_inner.wrap_vel;
+		if(_this != null && _this.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this1 = _this.zpp_inner;
+		if(_this1._validate != null) {
+			_this1._validate();
+		}
+		if(_this.zpp_inner.x > 2) {
+			this.blitzy.scale.x = 1;
+		} else {
+			var _this = this.obj;
+			var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+			if(_this1.zpp_inner.wrap_vel == null) {
+				_this1.zpp_inner.setupVelocity();
+			}
+			var _this = _this1.zpp_inner.wrap_vel;
+			if(_this != null && _this.zpp_disp) {
+				throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+			}
+			var _this1 = _this.zpp_inner;
+			if(_this1._validate != null) {
+				_this1._validate();
+			}
+			if(_this.zpp_inner.x < -2) {
+				this.blitzy.scale.x = -1;
+			}
+		}
 		var l = this.objSize * 0.5 | 0;
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points = pos.zpp_inner.x + l * Math.cos(rad) - l * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points1 = pos.zpp_inner.y + l * Math.sin(rad) + l * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points2 = pos.zpp_inner.x - l * Math.cos(rad) - l * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points3 = pos.zpp_inner.y - l * Math.sin(rad) + l * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points4 = pos.zpp_inner.x - l * Math.cos(rad) + l * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points5 = pos.zpp_inner.y - l * Math.sin(rad) - l * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var points6 = pos.zpp_inner.x + l * Math.cos(rad) + l * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		graphics.drawPolygon([points,points1,points2,points3,points4,points5,points6,pos.zpp_inner.y + l * Math.sin(rad) - l * Math.cos(rad)]);
+		this.getPoints(2 * l,l,pos,rad);
 	}
 };
 var Main = function() { };
@@ -23953,6 +23956,7 @@ var zpp_$nape_phys_ZPP_$Body = function() {
 	this.kinvelx = 0.0;
 	this.forcey = 0.0;
 	this.forcex = 0.0;
+	this.wrap_vel = null;
 	this.vely = 0.0;
 	this.velx = 0.0;
 	this.wrap_pos = null;
@@ -24136,6 +24140,18 @@ zpp_$nape_phys_ZPP_$Body.prototype = $extend(zpp_$nape_phys_ZPP_$Interactor.prot
 		this.wrap_pos.zpp_inner.x = this.posx;
 		this.wrap_pos.zpp_inner.y = this.posy;
 	}
+	,vel_invalidate: function(vel) {
+		if(this.type == 1) {
+			throw haxe_Exception.thrown("Error: Static body cannot have its velocity set.");
+		}
+		this.velx = vel.x;
+		this.vely = vel.y;
+		this.wake();
+	}
+	,vel_validate: function() {
+		this.wrap_vel.zpp_inner.x = this.velx;
+		this.wrap_vel.zpp_inner.y = this.vely;
+	}
 	,setupPosition: function() {
 		var x = this.posx;
 		var y = this.posy;
@@ -24226,6 +24242,98 @@ zpp_$nape_phys_ZPP_$Body.prototype = $extend(zpp_$nape_phys_ZPP_$Interactor.prot
 		} else {
 			this.wrap_pos.zpp_inner._invalidate = $bind(this,this.pos_invalidate);
 			this.wrap_pos.zpp_inner._validate = $bind(this,this.pos_validate);
+		}
+	}
+	,setupVelocity: function() {
+		var x = this.velx;
+		var y = this.vely;
+		if(y == null) {
+			y = 0;
+		}
+		if(x == null) {
+			x = 0;
+		}
+		if(x != x || y != y) {
+			throw haxe_Exception.thrown("Error: Vec2 components cannot be NaN");
+		}
+		var ret;
+		if(zpp_$nape_util_ZPP_$PubPool.poolVec2 == null) {
+			ret = new nape_geom_Vec2();
+		} else {
+			ret = zpp_$nape_util_ZPP_$PubPool.poolVec2;
+			zpp_$nape_util_ZPP_$PubPool.poolVec2 = ret.zpp_pool;
+			ret.zpp_pool = null;
+			ret.zpp_disp = false;
+			if(ret == zpp_$nape_util_ZPP_$PubPool.nextVec2) {
+				zpp_$nape_util_ZPP_$PubPool.nextVec2 = null;
+			}
+		}
+		if(ret.zpp_inner == null) {
+			var ret1;
+			if(zpp_$nape_geom_ZPP_$Vec2.zpp_pool == null) {
+				ret1 = new zpp_$nape_geom_ZPP_$Vec2();
+			} else {
+				ret1 = zpp_$nape_geom_ZPP_$Vec2.zpp_pool;
+				zpp_$nape_geom_ZPP_$Vec2.zpp_pool = ret1.next;
+				ret1.next = null;
+			}
+			ret1.weak = false;
+			ret1._immutable = false;
+			ret1.x = x;
+			ret1.y = y;
+			ret.zpp_inner = ret1;
+			ret.zpp_inner.outer = ret;
+		} else {
+			if(ret != null && ret.zpp_disp) {
+				throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+			}
+			var _this = ret.zpp_inner;
+			if(_this._immutable) {
+				throw haxe_Exception.thrown("Error: Vec2 is immutable");
+			}
+			if(_this._isimmutable != null) {
+				_this._isimmutable();
+			}
+			if(x != x || y != y) {
+				throw haxe_Exception.thrown("Error: Vec2 components cannot be NaN");
+			}
+			var tmp;
+			if(ret != null && ret.zpp_disp) {
+				throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+			}
+			var _this = ret.zpp_inner;
+			if(_this._validate != null) {
+				_this._validate();
+			}
+			if(ret.zpp_inner.x == x) {
+				if(ret != null && ret.zpp_disp) {
+					throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+				}
+				var _this = ret.zpp_inner;
+				if(_this._validate != null) {
+					_this._validate();
+				}
+				tmp = ret.zpp_inner.y == y;
+			} else {
+				tmp = false;
+			}
+			if(!tmp) {
+				ret.zpp_inner.x = x;
+				ret.zpp_inner.y = y;
+				var _this = ret.zpp_inner;
+				if(_this._invalidate != null) {
+					_this._invalidate(_this);
+				}
+			}
+		}
+		ret.zpp_inner.weak = false;
+		this.wrap_vel = ret;
+		this.wrap_vel.zpp_inner._inuse = true;
+		if(this.world) {
+			this.wrap_vel.zpp_inner._immutable = true;
+		} else {
+			this.wrap_vel.zpp_inner._invalidate = $bind(this,this.vel_invalidate);
+			this.wrap_vel.zpp_inner._validate = $bind(this,this.vel_validate);
 		}
 	}
 	,invalidate_mass: function() {
