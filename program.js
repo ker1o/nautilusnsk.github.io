@@ -8,21 +8,22 @@ function $extend(from, fields) {
 }
 var Game = function(stage) {
 	this.initiated = false;
+	this.balls = [];
 	this.d = 50;
 	this.texts = [];
 	this.circles = [];
 	this.loader = new PIXI.Loader();
-	this.loader.add("imgs/blitzy.png").load($bind(this,this.setup));
+	this.loader.add("imgs/platform.png").add("imgs/blitzy.png").add("imgs/ball.png").add("imgs/ball_cracked.png").add("imgs/bomb.png").add("imgs/stone.png").add("imgs/card.png").add("imgs/block.png").add("imgs/bg.png").load($bind(this,this.setup));
 	this.stage = stage;
 };
 Game.__name__ = true;
 Game.prototype = {
 	setup: function() {
+		this.background = this.createBackgroundView();
+		this.background.position.x = 400;
+		this.background.position.y = 300;
+		this.stage.addChild(this.background);
 		this.objSize = 0.8 * this.d | 0;
-		this.blitzy = new PIXI.Sprite(this.loader.resources["imgs/blitzy.png"].texture);
-		this.blitzy.pivot.x = 38.5;
-		this.blitzy.pivot.y = this.objSize;
-		this.stage.addChild(this.blitzy);
 		this.space = new nape_space_Space(new nape_geom_Vec2(0,300));
 		var linesCb = new nape_callbacks_CbType();
 		var platformCb = new nape_callbacks_CbType();
@@ -104,6 +105,11 @@ Game.prototype = {
 		} else {
 			_this.unshift(obj1);
 		}
+		var left = 0.5 * (800 - 5 * (this.d + 1)) | 0;
+		this.card = this.createCardView();
+		this.card.position.x = left + (2.5 * (this.d + 1) | 0);
+		this.card.position.y = 500 - (2.5 * this.d | 0) + 10;
+		this.stage.addChild(this.card);
 		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
 			zpp_$nape_util_ZPP_$Flags.internal = true;
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
@@ -125,7 +131,7 @@ Game.prototype = {
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,249,250);
+		var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,left - 1,250);
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
 			_this1.zpp_inner_i.setupcbTypes();
@@ -141,7 +147,7 @@ Game.prototype = {
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,250 + 5 * (this.d + 1) + 1,250);
+		var _this = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,2,500,left + 5 * (this.d + 1) + 1,250);
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
 			_this1.zpp_inner_i.setupcbTypes();
@@ -158,19 +164,79 @@ Game.prototype = {
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		this.leftBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,245,500 + (-4. * this.d | 0) - 20);
+		this.leftBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,left - 5,500 + (-4. * this.d | 0) - 20);
 		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
 			zpp_$nape_util_ZPP_$Flags.internal = true;
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		this.rightBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,250 + 5 * (this.d + 1) + 5,500 + (-4. * this.d | 0) - 20);
+		this.rightBorder = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,10,this.borderHeight,left + 5 * (this.d + 1) + 5,500 + (-4. * this.d | 0) - 20);
+		this.leftBorderView = this.createBorderView();
+		var _this = this.leftBorder;
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner.wrap_pos == null) {
+			_this1.zpp_inner.setupPosition();
+		}
+		var _this = _this1.zpp_inner.wrap_pos;
+		if(_this != null && _this.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this1 = _this.zpp_inner;
+		if(_this1._validate != null) {
+			_this1._validate();
+		}
+		this.leftBorderView.position.x = _this.zpp_inner.x;
+		var _this = this.leftBorder;
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner.wrap_pos == null) {
+			_this1.zpp_inner.setupPosition();
+		}
+		var _this = _this1.zpp_inner.wrap_pos;
+		if(_this != null && _this.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this1 = _this.zpp_inner;
+		if(_this1._validate != null) {
+			_this1._validate();
+		}
+		this.leftBorderView.position.y = _this.zpp_inner.y;
+		this.rightBorderView = this.createBorderView();
+		var _this = this.rightBorder;
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner.wrap_pos == null) {
+			_this1.zpp_inner.setupPosition();
+		}
+		var _this = _this1.zpp_inner.wrap_pos;
+		if(_this != null && _this.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this1 = _this.zpp_inner;
+		if(_this1._validate != null) {
+			_this1._validate();
+		}
+		this.rightBorderView.position.x = _this.zpp_inner.x;
+		var _this = this.rightBorder;
+		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
+		if(_this1.zpp_inner.wrap_pos == null) {
+			_this1.zpp_inner.setupPosition();
+		}
+		var _this = _this1.zpp_inner.wrap_pos;
+		if(_this != null && _this.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this1 = _this.zpp_inner;
+		if(_this1._validate != null) {
+			_this1._validate();
+		}
+		this.rightBorderView.position.y = _this.zpp_inner.y;
+		this.stage.addChild(this.leftBorderView);
+		this.stage.addChild(this.rightBorderView);
 		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
 			zpp_$nape_util_ZPP_$Flags.internal = true;
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + (this.d + 1),500 - (2.5 * this.d | 0));
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,left + (this.d + 1),500 - (2.5 * this.d | 0));
 		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
 		if(_this.zpp_inner_i.wrap_cbTypes == null) {
 			_this.zpp_inner_i.setupcbTypes();
@@ -186,7 +252,7 @@ Game.prototype = {
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 2 * (this.d + 1),500 - (2.5 * this.d | 0));
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,left + 2 * (this.d + 1),500 - (2.5 * this.d | 0));
 		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
 		if(_this.zpp_inner_i.wrap_cbTypes == null) {
 			_this.zpp_inner_i.setupcbTypes();
@@ -202,7 +268,7 @@ Game.prototype = {
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 3 * (this.d + 1),500 - (2.5 * this.d | 0));
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,left + 3 * (this.d + 1),500 - (2.5 * this.d | 0));
 		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
 		if(_this.zpp_inner_i.wrap_cbTypes == null) {
 			_this.zpp_inner_i.setupcbTypes();
@@ -218,7 +284,7 @@ Game.prototype = {
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,250 + 4 * (this.d + 1),500 - (2.5 * this.d | 0));
+		var rect = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC,1,5 * this.d,left + 4 * (this.d + 1),500 - (2.5 * this.d | 0));
 		var _this = rect.zpp_inner.body != null ? rect.zpp_inner.body.outer : null;
 		if(_this.zpp_inner_i.wrap_cbTypes == null) {
 			_this.zpp_inner_i.setupcbTypes();
@@ -235,7 +301,7 @@ Game.prototype = {
 			var i = _g++;
 			var _g1 = 0;
 			while(_g1 < 5) {
-				this.addCircle(250 + ((0.5 + i) * (this.d + 1) | 0),500 - ((0.5 + _g1++) * this.d | 0),this.d * 0.5 | 0);
+				this.addCircle(left + ((0.5 + i) * (this.d + 1) | 0),500 - ((0.5 + _g1++) * this.d | 0),this.d * 0.5 | 0);
 				var num = 0;
 				while(true) {
 					num = i * 15 + Std.random(15) + 1;
@@ -244,7 +310,10 @@ Game.prototype = {
 					}
 				}
 				pickedNumbers.push(num);
-				var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 16777215, align : "center"});
+				var ballView = this.createBallView();
+				this.balls.push(ballView);
+				this.stage.addChild(ballView);
+				var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 0, align : "center"});
 				this.texts.push(text);
 				this.stage.addChild(text);
 			}
@@ -254,7 +323,7 @@ Game.prototype = {
 			zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		this.platform = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,5 * (this.d + 1),10,250 + (2.5 * (this.d + 1) | 0),500 - 5 * this.d - 5);
+		this.platform = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,5 * (this.d + 1),10,left + (2.5 * (this.d + 1) | 0),500 - 5 * this.d - 5);
 		var _this = this.platform;
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
@@ -276,12 +345,14 @@ Game.prototype = {
 			_this.zpp_inner.staticFriction = 0.;
 			_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ARBITERS);
 		}
+		this.platformView = this.createPlatformView();
+		this.stage.addChild(this.platformView);
 		if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
 			zpp_$nape_util_ZPP_$Flags.internal = true;
 			zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC = new nape_phys_BodyType();
 			zpp_$nape_util_ZPP_$Flags.internal = false;
 		}
-		this.obj = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,2 * this.objSize,this.objSize,250 + (2.5 * (this.d + 1) | 0),500 - (5.5 * this.d | 0) - 10);
+		this.obj = this.createRect(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC,2 * this.objSize,this.objSize,left + (2.5 * (this.d + 1) | 0),500 - (5.5 * this.d | 0) - 10);
 		var _this = this.obj;
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner_i.wrap_cbTypes == null) {
@@ -303,8 +374,12 @@ Game.prototype = {
 			_this.zpp_inner.staticFriction = 0.;
 			_this.zpp_inner.invalidate(zpp_$nape_phys_ZPP_$Material.WAKE | zpp_$nape_phys_ZPP_$Material.ARBITERS);
 		}
-		this.bingoText = new PIXI.Text("BINGO!",{ fontFamily : "Arial", fontSize : 64, fill : 16777215, align : "center"});
-		this.bingoText.x = 250 + (2.5 * (this.d + 1) - this.bingoText.width * 0.5 | 0);
+		this.blitzy = new PIXI.Sprite(this.loader.resources["imgs/blitzy.png"].texture);
+		this.blitzy.pivot.x = 38.5;
+		this.blitzy.pivot.y = this.objSize;
+		this.stage.addChild(this.blitzy);
+		this.bingoText = new PIXI.Text("BINGO!",{ fontFamily : "Arial", fontSize : 64, fill : 11892992, align : "center"});
+		this.bingoText.x = left + (2.5 * (this.d + 1) - this.bingoText.width * 0.5 | 0);
 		this.bingoText.y = 100;
 		this.initiated = true;
 	}
@@ -648,9 +723,47 @@ Game.prototype = {
 				}
 				this.circles.splice(index,1);
 				this.stage.removeChild(this.texts[index]);
+				this.stage.removeChild(this.balls[index]);
 				this.texts.splice(index,1);
+				this.balls.splice(index,1);
 			}
 		}
+	}
+	,createBorderView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/block.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.38;
+		return sprite;
+	}
+	,createBallView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/ball.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.155;
+		return sprite;
+	}
+	,createCardView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/card.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.22;
+		return sprite;
+	}
+	,createBackgroundView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/bg.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.5;
+		return sprite;
+	}
+	,createPlatformView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/platform.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = 0.85;
+		sprite.scale.y = 0.35;
+		return sprite;
 	}
 	,onWin: function(_) {
 		this.stage.addChild(this.bingoText);
@@ -732,78 +845,39 @@ Game.prototype = {
 			return;
 		}
 		graphics.lineStyle(1,65280,1,0.5,false);
-		var _this = this.leftBorder;
-		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-		if(_this1.zpp_inner.wrap_pos == null) {
-			_this1.zpp_inner.setupPosition();
-		}
-		var _this = _this1.zpp_inner.wrap_pos;
-		if(_this != null && _this.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this1 = _this.zpp_inner;
-		if(_this1._validate != null) {
-			_this1._validate();
-		}
-		var tmp = _this.zpp_inner.x - 5;
-		var _this = this.leftBorder;
-		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-		if(_this1.zpp_inner.wrap_pos == null) {
-			_this1.zpp_inner.setupPosition();
-		}
-		var _this = _this1.zpp_inner.wrap_pos;
-		if(_this != null && _this.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this1 = _this.zpp_inner;
-		if(_this1._validate != null) {
-			_this1._validate();
-		}
-		graphics.drawRect(tmp,_this.zpp_inner.y - (0.5 * this.borderHeight | 0),10,this.borderHeight);
-		var _this = this.rightBorder;
-		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-		if(_this1.zpp_inner.wrap_pos == null) {
-			_this1.zpp_inner.setupPosition();
-		}
-		var _this = _this1.zpp_inner.wrap_pos;
-		if(_this != null && _this.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this1 = _this.zpp_inner;
-		if(_this1._validate != null) {
-			_this1._validate();
-		}
-		var tmp = _this.zpp_inner.x - 5;
-		var _this = this.rightBorder;
-		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
-		if(_this1.zpp_inner.wrap_pos == null) {
-			_this1.zpp_inner.setupPosition();
-		}
-		var _this = _this1.zpp_inner.wrap_pos;
-		if(_this != null && _this.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this1 = _this.zpp_inner;
-		if(_this1._validate != null) {
-			_this1._validate();
-		}
-		graphics.drawRect(tmp,_this.zpp_inner.y - (0.5 * this.borderHeight | 0),10,this.borderHeight);
 		graphics.lineStyle(1,16777215,1,0.5,false);
-		var w = 5 * (this.d + 1);
 		var _this = this.platform;
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner.wrap_pos == null) {
 			_this1.zpp_inner.setupPosition();
 		}
+		var pos = _this1.zpp_inner.wrap_pos;
 		var _this = this.platform;
-		graphics.drawPolygon(this.getPoints(w * 0.5 | 0,5. | 0,_this1.zpp_inner.wrap_pos,(_this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null).zpp_inner.rot));
+		var rad = (_this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null).zpp_inner.rot;
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		this.platformView.position.x = pos.zpp_inner.x;
+		if(pos != null && pos.zpp_disp) {
+			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		}
+		var _this = pos.zpp_inner;
+		if(_this._validate != null) {
+			_this._validate();
+		}
+		this.platformView.position.y = pos.zpp_inner.y;
+		this.platformView.rotation = rad;
 		graphics.lineStyle(1,16711935,1,0.5,false);
 		var _g = 0;
 		var _g1 = this.circles.length;
 		while(_g < _g1) {
 			var i = _g++;
 			var circle = this.circles[i];
-			var text = this.texts[i];
+			var ballView = this.balls[i];
 			var _this = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
 			if(_this.zpp_inner.wrap_pos == null) {
 				_this.zpp_inner.setupPosition();
@@ -816,7 +890,7 @@ Game.prototype = {
 			if(_this2._validate != null) {
 				_this2._validate();
 			}
-			var tmp = _this1.zpp_inner.x;
+			ballView.position.x = _this1.zpp_inner.x;
 			var _this3 = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
 			if(_this3.zpp_inner.wrap_pos == null) {
 				_this3.zpp_inner.setupPosition();
@@ -829,7 +903,8 @@ Game.prototype = {
 			if(_this5._validate != null) {
 				_this5._validate();
 			}
-			graphics.drawCircle(tmp,_this4.zpp_inner.y,circle.zpp_inner_zn.radius);
+			ballView.position.y = _this4.zpp_inner.y;
+			var text = this.texts[i];
 			var _this6 = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
 			if(_this6.zpp_inner.wrap_pos == null) {
 				_this6.zpp_inner.setupPosition();
@@ -842,7 +917,7 @@ Game.prototype = {
 			if(_this8._validate != null) {
 				_this8._validate();
 			}
-			text.x = _this7.zpp_inner.x - 0.5 * text.width;
+			text.x = _this7.zpp_inner.x - 0.5 * text.width + 1;
 			var _this9 = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
 			if(_this9.zpp_inner.wrap_pos == null) {
 				_this9.zpp_inner.setupPosition();
@@ -855,7 +930,7 @@ Game.prototype = {
 			if(_this11._validate != null) {
 				_this11._validate();
 			}
-			text.y = _this10.zpp_inner.y - 0.5 * text.height;
+			text.y = _this10.zpp_inner.y - 0.5 * text.height - 3;
 		}
 		graphics.lineStyle(1,16776960,1,0.5,false);
 		var _this = this.obj;
