@@ -6,15 +6,42 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
+var BallModel = function(type) {
+	this.type = type;
+	this.state = 0;
+};
+BallModel.__name__ = true;
+var Animation = function(start,end,duration) {
+	this.start = start;
+	this.end = end;
+	this.duration = duration;
+	this.value = start;
+	this.finished = false;
+};
+Animation.__name__ = true;
+Animation.prototype = {
+	update: function(delta) {
+		this.value += delta / this.duration * (this.end - this.start);
+		haxe_Log.trace(this.value,{ fileName : "src/BallModel.hx", lineNumber : 34, className : "Animation", methodName : "update", customParams : [this.finished]});
+		if(this.value >= this.end) {
+			this.value = this.end;
+			this.finished = true;
+		}
+	}
+};
 var Game = function(stage) {
 	this.initiated = false;
-	this.balls = [];
+	this.ballModels = [];
+	this.ballViews = [];
 	this.d = 50;
 	this.texts = [];
 	this.circles = [];
 	this.loader = new PIXI.Loader();
 	this.loader.add("imgs/platform.png").add("imgs/blitzy.png").add("imgs/ball.png").add("imgs/ball_cracked.png").add("imgs/bomb.png").add("imgs/stone.png").add("imgs/card.png").add("imgs/block.png").add("imgs/bg.png").load($bind(this,this.setup));
 	this.stage = stage;
+	this.ballsContainer = new PIXI.Container();
+	this.numbersContainer = new PIXI.Container();
+	this.effectsContainer = new PIXI.Container();
 };
 Game.__name__ = true;
 Game.prototype = {
@@ -110,6 +137,9 @@ Game.prototype = {
 		this.card.position.x = left + (2.5 * (this.d + 1) | 0);
 		this.card.position.y = 500 - (2.5 * this.d | 0) + 10;
 		this.stage.addChild(this.card);
+		this.stage.addChild(this.ballsContainer);
+		this.stage.addChild(this.numbersContainer);
+		this.stage.addChild(this.effectsContainer);
 		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
 			zpp_$nape_util_ZPP_$Flags.internal = true;
 			zpp_$nape_util_ZPP_$Flags.BodyType_STATIC = new nape_phys_BodyType();
@@ -301,7 +331,12 @@ Game.prototype = {
 			var i = _g++;
 			var _g1 = 0;
 			while(_g1 < 5) {
-				this.addCircle(left + ((0.5 + i) * (this.d + 1) | 0),500 - ((0.5 + _g1++) * this.d | 0),this.d * 0.5 | 0);
+				var j = _g1++;
+				var ballTypeRandom = Math.random();
+				var ballModel = new BallModel(ballTypeRandom < 0.05 ? 3 : ballTypeRandom < 0.1 ? 2 : 0);
+				this.ballModels.push(ballModel);
+				var circle = this.addCircle(left + ((0.5 + i) * (this.d + 1) | 0),500 - ((0.5 + j) * this.d | 0),this.d * 0.5 | 0);
+				this.circles.push(circle);
 				var num = 0;
 				while(true) {
 					num = i * 15 + Std.random(15) + 1;
@@ -310,12 +345,12 @@ Game.prototype = {
 					}
 				}
 				pickedNumbers.push(num);
-				var ballView = this.createBallView();
-				this.balls.push(ballView);
-				this.stage.addChild(ballView);
+				var ballView = this.createBallView(ballModel.type);
+				this.ballViews.push(ballView);
+				this.ballsContainer.addChild(ballView);
 				var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 0, align : "center"});
 				this.texts.push(text);
-				this.stage.addChild(text);
+				this.numbersContainer.addChild(text);
 			}
 		}
 		if(zpp_$nape_util_ZPP_$Flags.BodyType_DYNAMIC == null) {
@@ -476,7 +511,6 @@ Game.prototype = {
 				}
 			}
 		}
-		this.circles.push(shape);
 		var _this = shape.zpp_inner.material.wrapper();
 		if(0 != _this.zpp_inner.dynamicFriction) {
 			_this.zpp_inner.dynamicFriction = 0.;
@@ -702,68 +736,222 @@ Game.prototype = {
 				break;
 			}
 			_g.zpp_critical = false;
-			var body = _g.zpp_inner.at(_g.zpp_i++);
-			var shape = body.zpp_inner.wrap_shapes.at(0);
+			var shape = _g.zpp_inner.at(_g.zpp_i++).zpp_inner.wrap_shapes.at(0);
 			var index = this.circles.indexOf(shape);
 			if(index > -1) {
-				if(body.zpp_inner.compound != null) {
-					throw haxe_Exception.thrown("Error: Cannot set the space of a Body belonging to a Compound, only the root Compound space can be set");
-				}
-				body.zpp_inner.immutable_midstep("Body::space");
-				if(body.zpp_inner.world) {
-					throw haxe_Exception.thrown("Error: Space::world is immutable");
-				}
-				if((body.zpp_inner.space == null ? null : body.zpp_inner.space.outer) != null) {
-					if((body.zpp_inner.space == null ? null : body.zpp_inner.space.outer) != null) {
-						body.zpp_inner.component.woken = false;
-					}
-					if((body.zpp_inner.space == null ? null : body.zpp_inner.space.outer) != null) {
-						(body.zpp_inner.space == null ? null : body.zpp_inner.space.outer).zpp_inner.wrap_bodies.remove(body);
-					}
-				}
-				this.circles.splice(index,1);
-				this.stage.removeChild(this.texts[index]);
-				this.stage.removeChild(this.balls[index]);
-				this.texts.splice(index,1);
-				this.balls.splice(index,1);
+				this.daub(index);
 			}
 		}
 	}
-	,createBorderView: function() {
-		var sprite = new PIXI.Sprite(this.loader.resources["imgs/block.png"].texture);
-		sprite.pivot.x = sprite.texture.width * 0.5;
-		sprite.pivot.y = sprite.texture.height * 0.5;
-		sprite.scale.x = sprite.scale.y = 0.38;
-		return sprite;
+	,daub: function(index) {
+		var circle = this.circles[index];
+		var _this = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
+		if(_this.zpp_inner.compound != null) {
+			throw haxe_Exception.thrown("Error: Cannot set the space of a Body belonging to a Compound, only the root Compound space can be set");
+		}
+		_this.zpp_inner.immutable_midstep("Body::space");
+		if(_this.zpp_inner.world) {
+			throw haxe_Exception.thrown("Error: Space::world is immutable");
+		}
+		if((_this.zpp_inner.space == null ? null : _this.zpp_inner.space.outer) != null) {
+			if((_this.zpp_inner.space == null ? null : _this.zpp_inner.space.outer) != null) {
+				_this.zpp_inner.component.woken = false;
+			}
+			if((_this.zpp_inner.space == null ? null : _this.zpp_inner.space.outer) != null) {
+				(_this.zpp_inner.space == null ? null : _this.zpp_inner.space.outer).zpp_inner.wrap_bodies.remove(_this);
+			}
+		}
+		this.circles[index] = null;
+		this.numbersContainer.removeChild(this.texts[index]);
+		this.ballsContainer.removeChild(this.ballViews[index]);
+		this.texts[index] = null;
+		this.ballViews[index] = null;
+		var model = this.ballModels[index];
+		if(model.type == 3) {
+			this.explode(index);
+		} else {
+			model.state = 3;
+		}
 	}
-	,createBallView: function() {
-		var sprite = new PIXI.Sprite(this.loader.resources["imgs/ball.png"].texture);
-		sprite.pivot.x = sprite.texture.width * 0.5;
-		sprite.pivot.y = sprite.texture.height * 0.5;
-		sprite.scale.x = sprite.scale.y = 0.155;
-		return sprite;
+	,explode: function(index) {
+		var _gthis = this;
+		haxe_Log.trace("Explode!",{ fileName : "src/Game.hx", lineNumber : 292, className : "Game", methodName : "explode"});
+		var crack = function(map,i,j) {
+			if(i > -1 && i < 5 && j > -1 && j < 5 && j < map[i].length) {
+				var ballModel = map[i][j];
+				var index = _gthis.ballModels.indexOf(ballModel);
+				if(ballModel.type == 0) {
+					ballModel.type = 1;
+					ballModel.state = 2;
+					ballModel.animation = new Animation(0,100,0.2);
+					_gthis.ballsContainer.removeChild(_gthis.ballViews[index]);
+					_gthis.ballViews[index] = _gthis.createBallView(1);
+					_gthis.ballsContainer.addChild(_gthis.ballViews[index]);
+					haxe_Log.trace("crack at (" + i + ", " + j + ") at index " + index,{ fileName : "src/Game.hx", lineNumber : 307, className : "Game", methodName : "explode"});
+				} else if(ballModel.type == 1 || ballModel.type == 3) {
+					haxe_Timer.delay(function() {
+						_gthis.daub(index);
+					},0);
+				}
+			}
+		};
+		var model = this.ballModels[index];
+		model.state = 1;
+		model.animation = new Animation(0,10,0.5);
+		var map = this.getAliveModelsMap();
+		var _g = 0;
+		while(_g < 5) {
+			var i = _g++;
+			var _g1 = 0;
+			var _g2 = map[i].length;
+			while(_g1 < _g2) {
+				var j = _g1++;
+				if(map[i][j] == model) {
+					crack(map,i - 1,j + 1);
+					crack(map,i,j + 1);
+					crack(map,i + 1,j + 1);
+					crack(map,i - 1,j);
+					crack(map,i + 1,j);
+					crack(map,i - 1,j - 1);
+					crack(map,i,j - 1);
+					crack(map,i + 1,j - 1);
+				}
+			}
+		}
 	}
-	,createCardView: function() {
-		var sprite = new PIXI.Sprite(this.loader.resources["imgs/card.png"].texture);
-		sprite.pivot.x = sprite.texture.width * 0.5;
-		sprite.pivot.y = sprite.texture.height * 0.5;
-		sprite.scale.x = sprite.scale.y = 0.22;
-		return sprite;
-	}
-	,createBackgroundView: function() {
-		var sprite = new PIXI.Sprite(this.loader.resources["imgs/bg.png"].texture);
-		sprite.pivot.x = sprite.texture.width * 0.5;
-		sprite.pivot.y = sprite.texture.height * 0.5;
-		sprite.scale.x = sprite.scale.y = 0.5;
-		return sprite;
-	}
-	,createPlatformView: function() {
-		var sprite = new PIXI.Sprite(this.loader.resources["imgs/platform.png"].texture);
-		sprite.pivot.x = sprite.texture.width * 0.5;
-		sprite.pivot.y = sprite.texture.height * 0.5;
-		sprite.scale.x = 0.85;
-		sprite.scale.y = 0.35;
-		return sprite;
+	,getAliveModelsMap: function() {
+		var arr = [[],[],[],[],[]];
+		var nextJ = 0;
+		var ballModel = this.ballModels[0];
+		if(ballModel.state != 3) {
+			arr[0][0] = ballModel;
+			nextJ = 1;
+		}
+		var ballModel = this.ballModels[1];
+		if(ballModel.state != 3) {
+			arr[0][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[2];
+		if(ballModel.state != 3) {
+			arr[0][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[3];
+		if(ballModel.state != 3) {
+			arr[0][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[4];
+		if(ballModel.state != 3) {
+			arr[0][nextJ] = ballModel;
+			++nextJ;
+		}
+		var nextJ = 0;
+		var ballModel = this.ballModels[5];
+		if(ballModel.state != 3) {
+			arr[1][0] = ballModel;
+			nextJ = 1;
+		}
+		var ballModel = this.ballModels[6];
+		if(ballModel.state != 3) {
+			arr[1][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[7];
+		if(ballModel.state != 3) {
+			arr[1][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[8];
+		if(ballModel.state != 3) {
+			arr[1][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[9];
+		if(ballModel.state != 3) {
+			arr[1][nextJ] = ballModel;
+			++nextJ;
+		}
+		var nextJ = 0;
+		var ballModel = this.ballModels[10];
+		if(ballModel.state != 3) {
+			arr[2][0] = ballModel;
+			nextJ = 1;
+		}
+		var ballModel = this.ballModels[11];
+		if(ballModel.state != 3) {
+			arr[2][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[12];
+		if(ballModel.state != 3) {
+			arr[2][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[13];
+		if(ballModel.state != 3) {
+			arr[2][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[14];
+		if(ballModel.state != 3) {
+			arr[2][nextJ] = ballModel;
+			++nextJ;
+		}
+		var nextJ = 0;
+		var ballModel = this.ballModels[15];
+		if(ballModel.state != 3) {
+			arr[3][0] = ballModel;
+			nextJ = 1;
+		}
+		var ballModel = this.ballModels[16];
+		if(ballModel.state != 3) {
+			arr[3][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[17];
+		if(ballModel.state != 3) {
+			arr[3][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[18];
+		if(ballModel.state != 3) {
+			arr[3][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[19];
+		if(ballModel.state != 3) {
+			arr[3][nextJ] = ballModel;
+			++nextJ;
+		}
+		var nextJ = 0;
+		var ballModel = this.ballModels[20];
+		if(ballModel.state != 3) {
+			arr[4][0] = ballModel;
+			nextJ = 1;
+		}
+		var ballModel = this.ballModels[21];
+		if(ballModel.state != 3) {
+			arr[4][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[22];
+		if(ballModel.state != 3) {
+			arr[4][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[23];
+		if(ballModel.state != 3) {
+			arr[4][nextJ] = ballModel;
+			++nextJ;
+		}
+		var ballModel = this.ballModels[24];
+		if(ballModel.state != 3) {
+			arr[4][nextJ] = ballModel;
+			++nextJ;
+		}
+		return arr;
 	}
 	,onWin: function(_) {
 		this.stage.addChild(this.bingoText);
@@ -773,79 +961,57 @@ Game.prototype = {
 			return;
 		}
 		this.space.step(0.016666666666666666);
-	}
-	,getPoints: function(hw,hh,pos,rad) {
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+		var _g = 0;
+		while(_g < 25) {
+			var i = _g++;
+			var model = this.ballModels[i];
+			var circle = this.circles[i];
+			if(circle != null) {
+				var _this = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
+				if(_this.zpp_inner.wrap_pos == null) {
+					_this.zpp_inner.setupPosition();
+				}
+				var _this1 = _this.zpp_inner.wrap_pos;
+				if(_this1 != null && _this1.zpp_disp) {
+					throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+				}
+				var _this2 = _this1.zpp_inner;
+				if(_this2._validate != null) {
+					_this2._validate();
+				}
+				model.x = _this1.zpp_inner.x;
+				var _this3 = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
+				if(_this3.zpp_inner.wrap_pos == null) {
+					_this3.zpp_inner.setupPosition();
+				}
+				var _this4 = _this3.zpp_inner.wrap_pos;
+				if(_this4 != null && _this4.zpp_disp) {
+					throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
+				}
+				var _this5 = _this4.zpp_inner;
+				if(_this5._validate != null) {
+					_this5._validate();
+				}
+				model.y = _this4.zpp_inner.y;
+			}
+			if(model.animation != null) {
+				if(!model.animation.finished) {
+					model.animation.update(0.016666666666666666);
+				} else {
+					if(model.state == 1) {
+						model.state = 3;
+					} else if(model.state == 2) {
+						model.state = 0;
+					}
+					model.animation = null;
+				}
+			}
 		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var tmp = pos.zpp_inner.x + hw * Math.cos(rad) - hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var tmp1 = pos.zpp_inner.y + hw * Math.sin(rad) + hh * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var tmp2 = pos.zpp_inner.x - hw * Math.cos(rad) - hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var tmp3 = pos.zpp_inner.y - hw * Math.sin(rad) + hh * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var tmp4 = pos.zpp_inner.x - hw * Math.cos(rad) + hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var tmp5 = pos.zpp_inner.y - hw * Math.sin(rad) - hh * Math.cos(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		var tmp6 = pos.zpp_inner.x + hw * Math.cos(rad) + hh * Math.sin(rad);
-		if(pos != null && pos.zpp_disp) {
-			throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-		}
-		var _this = pos.zpp_inner;
-		if(_this._validate != null) {
-			_this._validate();
-		}
-		return [tmp,tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,pos.zpp_inner.y + hw * Math.sin(rad) - hh * Math.cos(rad)];
 	}
 	,render: function(graphics) {
 		if(!this.initiated) {
 			return;
 		}
-		graphics.lineStyle(1,65280,1,0.5,false);
-		graphics.lineStyle(1,16777215,1,0.5,false);
 		var _this = this.platform;
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner.wrap_pos == null) {
@@ -871,68 +1037,26 @@ Game.prototype = {
 		}
 		this.platformView.position.y = pos.zpp_inner.y;
 		this.platformView.rotation = rad;
-		graphics.lineStyle(1,16711935,1,0.5,false);
 		var _g = 0;
-		var _g1 = this.circles.length;
+		var _g1 = this.ballModels.length;
 		while(_g < _g1) {
 			var i = _g++;
-			var circle = this.circles[i];
-			var ballView = this.balls[i];
-			var _this = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
-			if(_this.zpp_inner.wrap_pos == null) {
-				_this.zpp_inner.setupPosition();
+			var model = this.ballModels[i];
+			if(model.state != 3 && model.state != 1) {
+				var dx = 0;
+				var dy = 0;
+				if(model.state == 2) {
+					dx = -2 + Std.random(4);
+					dy = -2 + Std.random(4);
+				}
+				var ballView = this.ballViews[i];
+				ballView.position.x = model.x + dx;
+				ballView.position.y = model.y + dy;
+				var text = this.texts[i];
+				text.x = model.x - 0.5 * text.width + 1 + dx;
+				text.y = model.y - 0.5 * text.height - 3 + dy;
 			}
-			var _this1 = _this.zpp_inner.wrap_pos;
-			if(_this1 != null && _this1.zpp_disp) {
-				throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-			}
-			var _this2 = _this1.zpp_inner;
-			if(_this2._validate != null) {
-				_this2._validate();
-			}
-			ballView.position.x = _this1.zpp_inner.x;
-			var _this3 = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
-			if(_this3.zpp_inner.wrap_pos == null) {
-				_this3.zpp_inner.setupPosition();
-			}
-			var _this4 = _this3.zpp_inner.wrap_pos;
-			if(_this4 != null && _this4.zpp_disp) {
-				throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-			}
-			var _this5 = _this4.zpp_inner;
-			if(_this5._validate != null) {
-				_this5._validate();
-			}
-			ballView.position.y = _this4.zpp_inner.y;
-			var text = this.texts[i];
-			var _this6 = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
-			if(_this6.zpp_inner.wrap_pos == null) {
-				_this6.zpp_inner.setupPosition();
-			}
-			var _this7 = _this6.zpp_inner.wrap_pos;
-			if(_this7 != null && _this7.zpp_disp) {
-				throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-			}
-			var _this8 = _this7.zpp_inner;
-			if(_this8._validate != null) {
-				_this8._validate();
-			}
-			text.x = _this7.zpp_inner.x - 0.5 * text.width + 1;
-			var _this9 = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
-			if(_this9.zpp_inner.wrap_pos == null) {
-				_this9.zpp_inner.setupPosition();
-			}
-			var _this10 = _this9.zpp_inner.wrap_pos;
-			if(_this10 != null && _this10.zpp_disp) {
-				throw haxe_Exception.thrown("Error: " + "Vec2" + " has been disposed and cannot be used!");
-			}
-			var _this11 = _this10.zpp_inner;
-			if(_this11._validate != null) {
-				_this11._validate();
-			}
-			text.y = _this10.zpp_inner.y - 0.5 * text.height - 3;
 		}
-		graphics.lineStyle(1,16776960,1,0.5,false);
 		var _this = this.obj;
 		var _this1 = _this.zpp_inner.body != null ? _this.zpp_inner.body.outer : null;
 		if(_this1.zpp_inner.wrap_pos == null) {
@@ -991,8 +1115,56 @@ Game.prototype = {
 				this.blitzy.scale.x = -1;
 			}
 		}
-		var l = this.objSize * 0.5 | 0;
-		this.getPoints(2 * l,l,pos,rad);
+	}
+	,createBorderView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/block.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.38;
+		return sprite;
+	}
+	,createBallView: function(type) {
+		var sprite;
+		switch(type) {
+		case 0:
+			sprite = new PIXI.Sprite(this.loader.resources["imgs/ball.png"].texture);
+			break;
+		case 1:
+			sprite = new PIXI.Sprite(this.loader.resources["imgs/ball_cracked.png"].texture);
+			break;
+		case 2:
+			sprite = new PIXI.Sprite(this.loader.resources["imgs/stone.png"].texture);
+			break;
+		case 3:
+			sprite = new PIXI.Sprite(this.loader.resources["imgs/bomb.png"].texture);
+			break;
+		}
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.155;
+		return sprite;
+	}
+	,createCardView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/card.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.22;
+		return sprite;
+	}
+	,createBackgroundView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/bg.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = sprite.scale.y = 0.5;
+		return sprite;
+	}
+	,createPlatformView: function() {
+		var sprite = new PIXI.Sprite(this.loader.resources["imgs/platform.png"].texture);
+		sprite.pivot.x = sprite.texture.width * 0.5;
+		sprite.pivot.y = sprite.texture.height * 0.5;
+		sprite.scale.x = 0.85;
+		sprite.scale.y = 0.35;
+		return sprite;
 	}
 };
 var Main = function() { };
@@ -1054,6 +1226,53 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 		return this.__nativeException;
 	}
 });
+var haxe_Log = function() { };
+haxe_Log.__name__ = true;
+haxe_Log.formatOutput = function(v,infos) {
+	var str = Std.string(v);
+	if(infos == null) {
+		return str;
+	}
+	var pstr = infos.fileName + ":" + infos.lineNumber;
+	if(infos.customParams != null) {
+		var _g = 0;
+		var _g1 = infos.customParams;
+		while(_g < _g1.length) str += ", " + Std.string(_g1[_g++]);
+	}
+	return pstr + ": " + str;
+};
+haxe_Log.trace = function(v,infos) {
+	var str = haxe_Log.formatOutput(v,infos);
+	if(typeof(console) != "undefined" && console.log != null) {
+		console.log(str);
+	}
+};
+var haxe_Timer = function(time_ms) {
+	var me = this;
+	this.id = setInterval(function() {
+		me.run();
+	},time_ms);
+};
+haxe_Timer.__name__ = true;
+haxe_Timer.delay = function(f,time_ms) {
+	var t = new haxe_Timer(time_ms);
+	t.run = function() {
+		t.stop();
+		f();
+	};
+	return t;
+};
+haxe_Timer.prototype = {
+	stop: function() {
+		if(this.id == null) {
+			return;
+		}
+		clearInterval(this.id);
+		this.id = null;
+	}
+	,run: function() {
+	}
+};
 var haxe_ValueException = function(value,previous,native) {
 	haxe_Exception.call(this,String(value),previous,native);
 	this.value = value;
