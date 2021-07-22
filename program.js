@@ -44,6 +44,7 @@ var Game = function(stage) {
 	this.loader.add("imgs/platform.png").add("imgs/blitzy.png").add("imgs/ball.png").add("imgs/ball_cracked.png").add("imgs/bomb.png").add("imgs/stone.png").add("imgs/card.png").add("imgs/block.png").add("imgs/bg.png").add("imgs/explosion.json").add("imgs/win.json").add("imgs/dying.json").load($bind(this,this.setup));
 	this.stage = stage;
 	this.ballsContainer = new PIXI.Container();
+	this.bombContainer = new PIXI.Container();
 	this.numbersContainer = new PIXI.Container();
 	this.effectsContainer = new PIXI.Container();
 };
@@ -144,6 +145,7 @@ Game.prototype = {
 		this.card.position.y = 500 - (2.5 * this.d | 0) + 10;
 		this.stage.addChild(this.card);
 		this.stage.addChild(this.ballsContainer);
+		this.stage.addChild(this.bombContainer);
 		this.stage.addChild(this.numbersContainer);
 		this.stage.addChild(this.effectsContainer);
 		if(zpp_$nape_util_ZPP_$Flags.BodyType_STATIC == null) {
@@ -363,7 +365,11 @@ Game.prototype = {
 				pickedNumbers.push(num);
 				var ballView = this.createBallView(ballModel.type);
 				this.ballViews.push(ballView);
-				this.ballsContainer.addChild(ballView);
+				if(ballModel.type == 3) {
+					this.bombContainer.addChild(ballView);
+				} else {
+					this.ballsContainer.addChild(ballView);
+				}
 				var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 0, align : "center"});
 				this.texts.push(text);
 				this.numbersContainer.addChild(text);
@@ -803,11 +809,15 @@ Game.prototype = {
 			}
 		}
 		this.circles[index] = null;
+		var model = this.ballModels[index];
+		if(model.type == 3) {
+			this.bombContainer.removeChild(this.ballViews[index]);
+		} else {
+			this.ballsContainer.removeChild(this.ballViews[index]);
+		}
 		this.numbersContainer.removeChild(this.texts[index]);
-		this.ballsContainer.removeChild(this.ballViews[index]);
 		this.texts[index] = null;
 		this.ballViews[index] = null;
-		var model = this.ballModels[index];
 		if(model.type == 3) {
 			this.explode(index);
 		} else if((model.type == 0 || model.type == 1) && autoDaub) {
@@ -818,7 +828,7 @@ Game.prototype = {
 	}
 	,explode: function(index) {
 		var _gthis = this;
-		haxe_Log.trace("Explode!",{ fileName : "src/Game.hx", lineNumber : 312, className : "Game", methodName : "explode"});
+		haxe_Log.trace("Explode!",{ fileName : "src/Game.hx", lineNumber : 324, className : "Game", methodName : "explode"});
 		var crack = function(map,i,j) {
 			if(i > -1 && i < 5 && j > -1 && j < 5 && j < map[i].length) {
 				var ballModel = map[i][j];
@@ -830,10 +840,9 @@ Game.prototype = {
 					_gthis.ballsContainer.removeChild(_gthis.ballViews[index]);
 					_gthis.ballViews[index] = _gthis.createBallView(1);
 					_gthis.ballsContainer.addChild(_gthis.ballViews[index]);
-					haxe_Log.trace("crack at (" + i + ", " + j + ") at index " + index,{ fileName : "src/Game.hx", lineNumber : 327, className : "Game", methodName : "explode"});
 				} else if(ballModel.type == 1 || ballModel.type == 3) {
 					haxe_Timer.delay(function() {
-						_gthis.daub(index);
+						_gthis.daub(index,true);
 					},0);
 				}
 			}
@@ -867,7 +876,7 @@ Game.prototype = {
 	,die: function(index) {
 		var model = this.ballModels[index];
 		model.state = 3;
-		model.animation = new Animation(0,24,1);
+		model.animation = new Animation(0,24,1.2);
 		this.ballViews[index] = this.createDyingView();
 		this.effectsContainer.addChild(this.ballViews[index]);
 	}
@@ -1011,7 +1020,7 @@ Game.prototype = {
 		this.winAnimation.play();
 	}
 	,onBallsCollision: function(cb) {
-		haxe_Log.trace("balls collision!",{ fileName : "src/Game.hx", lineNumber : 391, className : "Game", methodName : "onBallsCollision"});
+		haxe_Log.trace("balls collision!",{ fileName : "src/Game.hx", lineNumber : 401, className : "Game", methodName : "onBallsCollision"});
 		this.processCollision(cb.zpp_inner.int1.outer_i,cb.zpp_inner.int2.outer_i);
 	}
 	,processCollision: function(body1,body2) {
