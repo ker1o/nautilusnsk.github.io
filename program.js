@@ -25,7 +25,6 @@ Animation.__name__ = true;
 Animation.prototype = {
 	update: function(delta) {
 		this.value += delta / this.duration * (this.end - this.start);
-		haxe_Log.trace(this.value,{ fileName : "src/BallModel.hx", lineNumber : 34, className : "Animation", methodName : "update", customParams : [this.finished]});
 		if(this.value >= this.end) {
 			this.value = this.end;
 			this.finished = true;
@@ -34,7 +33,7 @@ Animation.prototype = {
 	,__class__: Animation
 };
 var Game = function(stage) {
-	this.initiated = false;
+	this.active = false;
 	this.ballModels = [];
 	this.ballViews = [];
 	this.d = 50;
@@ -460,7 +459,7 @@ Game.prototype = {
 				_this.unshift(obj1);
 			}
 		},100);
-		this.initiated = true;
+		this.active = true;
 	}
 	,addCircle: function(x,y,r) {
 		var body = new nape_phys_Body();
@@ -673,6 +672,9 @@ Game.prototype = {
 		return shape;
 	}
 	,click: function(x,y) {
+		if(!this.active) {
+			return;
+		}
 		var x1 = x;
 		var y1 = y;
 		if(y == null) {
@@ -828,7 +830,7 @@ Game.prototype = {
 	}
 	,explode: function(index) {
 		var _gthis = this;
-		haxe_Log.trace("Explode!",{ fileName : "src/Game.hx", lineNumber : 324, className : "Game", methodName : "explode"});
+		console.log("src/Game.hx:328:","Explode!");
 		var crack = function(map,i,j) {
 			if(i > -1 && i < 5 && j > -1 && j < 5 && j < map[i].length) {
 				var ballModel = map[i][j];
@@ -1018,9 +1020,10 @@ Game.prototype = {
 		this.stage.addChild(this.winAnimation);
 		this.stage.removeChild(this.blitzy);
 		this.winAnimation.play();
+		this.active = false;
 	}
 	,onBallsCollision: function(cb) {
-		haxe_Log.trace("balls collision!",{ fileName : "src/Game.hx", lineNumber : 401, className : "Game", methodName : "onBallsCollision"});
+		console.log("src/Game.hx:407:","balls collision!");
 		this.processCollision(cb.zpp_inner.int1.outer_i,cb.zpp_inner.int2.outer_i);
 	}
 	,processCollision: function(body1,body2) {
@@ -1071,7 +1074,7 @@ Game.prototype = {
 		}
 	}
 	,update: function() {
-		if(!this.initiated) {
+		if(!this.active) {
 			return;
 		}
 		this.space.step(0.016666666666666666);
@@ -1124,7 +1127,7 @@ Game.prototype = {
 		}
 	}
 	,render: function(graphics) {
-		if(!this.initiated) {
+		if(!this.active) {
 			return;
 		}
 		var _this = this.platform;
@@ -1370,27 +1373,6 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	}
 	,__class__: haxe_Exception
 });
-var haxe_Log = function() { };
-haxe_Log.__name__ = true;
-haxe_Log.formatOutput = function(v,infos) {
-	var str = Std.string(v);
-	if(infos == null) {
-		return str;
-	}
-	var pstr = infos.fileName + ":" + infos.lineNumber;
-	if(infos.customParams != null) {
-		var _g = 0;
-		var _g1 = infos.customParams;
-		while(_g < _g1.length) str += ", " + Std.string(_g1[_g++]);
-	}
-	return pstr + ": " + str;
-};
-haxe_Log.trace = function(v,infos) {
-	var str = haxe_Log.formatOutput(v,infos);
-	if(typeof(console) != "undefined" && console.log != null) {
-		console.log(str);
-	}
-};
 var haxe_Timer = function(time_ms) {
 	var me = this;
 	this.id = setInterval(function() {
