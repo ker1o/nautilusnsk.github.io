@@ -41,7 +41,7 @@ var Game = function(stage) {
 	this.texts = [];
 	this.circles = [];
 	this.loader = new PIXI.Loader();
-	this.loader.add("imgs/platform.png").add("imgs/blitzy.png").add("imgs/ball.png").add("imgs/ball_cracked.png").add("imgs/bomb.png").add("imgs/stone.png").add("imgs/card.png").add("imgs/block.png").add("imgs/bg.png").add("imgs/explosion.json").load($bind(this,this.setup));
+	this.loader.add("imgs/platform.png").add("imgs/blitzy.png").add("imgs/ball.png").add("imgs/ball_cracked.png").add("imgs/bomb.png").add("imgs/stone.png").add("imgs/card.png").add("imgs/block.png").add("imgs/bg.png").add("imgs/explosion.json").add("imgs/win.json").add("imgs/dying.json").load($bind(this,this.setup));
 	this.stage = stage;
 	this.ballsContainer = new PIXI.Container();
 	this.numbersContainer = new PIXI.Container();
@@ -429,9 +429,11 @@ Game.prototype = {
 		this.blitzy.pivot.x = 38.5;
 		this.blitzy.pivot.y = this.objSize;
 		this.stage.addChild(this.blitzy);
-		this.bingoText = new PIXI.Text("BINGO!",{ fontFamily : "Arial", fontSize : 64, fill : 11892992, align : "center"});
-		this.bingoText.x = left + (2.5 * (this.d + 1) - this.bingoText.width * 0.5 | 0);
-		this.bingoText.y = 100;
+		this.winAnimation = new PIXI.AnimatedSprite(Reflect.field(this.loader.resources["imgs/win.json"].spritesheet.animations,"win"));
+		this.winAnimation.loop = false;
+		this.winAnimation.animationSpeed = 0.5;
+		this.winAnimation.position.x = left + (2.5 * (this.d + 1) | 0);
+		this.winAnimation.position.y = 500 - (2.5 * this.d | 0);
 		haxe_Timer.delay(function() {
 			var _this = _gthis.space.zpp_inner.wrap_listeners;
 			if(zpp_$nape_util_ZPP_$Flags.CbEvent_BEGIN == null) {
@@ -779,7 +781,10 @@ Game.prototype = {
 			}
 		}
 	}
-	,daub: function(index) {
+	,daub: function(index,autoDaub) {
+		if(autoDaub == null) {
+			autoDaub = false;
+		}
 		var circle = this.circles[index];
 		var _this = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
 		if(_this.zpp_inner.compound != null) {
@@ -805,13 +810,15 @@ Game.prototype = {
 		var model = this.ballModels[index];
 		if(model.type == 3) {
 			this.explode(index);
+		} else if((model.type == 0 || model.type == 1) && autoDaub) {
+			this.die(index);
 		} else {
-			model.state = 3;
+			model.state = 4;
 		}
 	}
 	,explode: function(index) {
 		var _gthis = this;
-		haxe_Log.trace("Explode!",{ fileName : "src/Game.hx", lineNumber : 308, className : "Game", methodName : "explode"});
+		haxe_Log.trace("Explode!",{ fileName : "src/Game.hx", lineNumber : 312, className : "Game", methodName : "explode"});
 		var crack = function(map,i,j) {
 			if(i > -1 && i < 5 && j > -1 && j < 5 && j < map[i].length) {
 				var ballModel = map[i][j];
@@ -823,7 +830,7 @@ Game.prototype = {
 					_gthis.ballsContainer.removeChild(_gthis.ballViews[index]);
 					_gthis.ballViews[index] = _gthis.createBallView(1);
 					_gthis.ballsContainer.addChild(_gthis.ballViews[index]);
-					haxe_Log.trace("crack at (" + i + ", " + j + ") at index " + index,{ fileName : "src/Game.hx", lineNumber : 323, className : "Game", methodName : "explode"});
+					haxe_Log.trace("crack at (" + i + ", " + j + ") at index " + index,{ fileName : "src/Game.hx", lineNumber : 327, className : "Game", methodName : "explode"});
 				} else if(ballModel.type == 1 || ballModel.type == 3) {
 					haxe_Timer.delay(function() {
 						_gthis.daub(index);
@@ -833,7 +840,7 @@ Game.prototype = {
 		};
 		var model = this.ballModels[index];
 		model.state = 1;
-		model.animation = new Animation(0,9,0.4);
+		model.animation = new Animation(0,32,0.8);
 		this.ballViews[index] = this.createExplosionView();
 		this.effectsContainer.addChild(this.ballViews[index]);
 		var map = this.getAliveModelsMap();
@@ -857,145 +864,154 @@ Game.prototype = {
 			}
 		}
 	}
+	,die: function(index) {
+		var model = this.ballModels[index];
+		model.state = 3;
+		model.animation = new Animation(0,24,1);
+		this.ballViews[index] = this.createDyingView();
+		this.effectsContainer.addChild(this.ballViews[index]);
+	}
 	,getAliveModelsMap: function() {
 		var arr = [[],[],[],[],[]];
 		var nextJ = 0;
 		var ballModel = this.ballModels[0];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[0][0] = ballModel;
 			nextJ = 1;
 		}
 		var ballModel = this.ballModels[1];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[0][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[2];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[0][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[3];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[0][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[4];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[0][nextJ] = ballModel;
 			++nextJ;
 		}
 		var nextJ = 0;
 		var ballModel = this.ballModels[5];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[1][0] = ballModel;
 			nextJ = 1;
 		}
 		var ballModel = this.ballModels[6];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[1][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[7];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[1][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[8];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[1][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[9];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[1][nextJ] = ballModel;
 			++nextJ;
 		}
 		var nextJ = 0;
 		var ballModel = this.ballModels[10];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[2][0] = ballModel;
 			nextJ = 1;
 		}
 		var ballModel = this.ballModels[11];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[2][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[12];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[2][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[13];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[2][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[14];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[2][nextJ] = ballModel;
 			++nextJ;
 		}
 		var nextJ = 0;
 		var ballModel = this.ballModels[15];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[3][0] = ballModel;
 			nextJ = 1;
 		}
 		var ballModel = this.ballModels[16];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[3][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[17];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[3][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[18];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[3][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[19];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[3][nextJ] = ballModel;
 			++nextJ;
 		}
 		var nextJ = 0;
 		var ballModel = this.ballModels[20];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[4][0] = ballModel;
 			nextJ = 1;
 		}
 		var ballModel = this.ballModels[21];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[4][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[22];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[4][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[23];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[4][nextJ] = ballModel;
 			++nextJ;
 		}
 		var ballModel = this.ballModels[24];
-		if(ballModel.state != 3) {
+		if(ballModel.state != 4) {
 			arr[4][nextJ] = ballModel;
 			++nextJ;
 		}
 		return arr;
 	}
 	,onWin: function(_) {
-		this.stage.addChild(this.bingoText);
+		this.stage.addChild(this.winAnimation);
+		this.stage.removeChild(this.blitzy);
+		this.winAnimation.play();
 	}
 	,onBallsCollision: function(cb) {
-		haxe_Log.trace("balls collision!",{ fileName : "src/Game.hx", lineNumber : 377, className : "Game", methodName : "onBallsCollision"});
+		haxe_Log.trace("balls collision!",{ fileName : "src/Game.hx", lineNumber : 391, className : "Game", methodName : "onBallsCollision"});
 		this.processCollision(cb.zpp_inner.int1.outer_i,cb.zpp_inner.int2.outer_i);
 	}
 	,processCollision: function(body1,body2) {
@@ -1036,18 +1052,13 @@ Game.prototype = {
 		var upModel = this.ballModels[upIndex];
 		var downModel = this.ballModels[downIndex];
 		if(upModel.type == 2 && downModel.type != 2) {
-			this.daub(downIndex);
+			this.daub(downIndex,true);
 		} else if(upModel.type == 3) {
 			this.daub(upIndex);
 		} else if(downModel.type == 3) {
 			this.daub(downIndex);
-		} else {
-			if(upModel.type == 1) {
-				this.daub(upIndex);
-			}
-			if(downModel.type == 1) {
-				this.daub(downIndex);
-			}
+		} else if(upModel.type == 1) {
+			this.daub(upIndex,true);
 		}
 	}
 	,update: function() {
@@ -1091,8 +1102,8 @@ Game.prototype = {
 			if(model.animation != null) {
 				model.animation.update(0.016666666666666666);
 				if(model.animation.finished) {
-					if(model.state == 1) {
-						model.state = 3;
+					if(model.state == 1 || model.state == 3) {
+						model.state = 4;
 						this.effectsContainer.removeChild(this.ballViews[i]);
 						this.ballViews[i] = null;
 					} else if(model.state == 2) {
@@ -1137,7 +1148,7 @@ Game.prototype = {
 		while(_g < _g1) {
 			var i = _g++;
 			var model = this.ballModels[i];
-			if(model.state != 3) {
+			if(model.state != 4) {
 				var dx = 0;
 				var dy = 0;
 				if(model.state == 2) {
@@ -1147,12 +1158,12 @@ Game.prototype = {
 				var ballView = this.ballViews[i];
 				ballView.position.x = model.x + dx;
 				ballView.position.y = model.y + dy;
-				if(model.state == 1) {
+				if(model.state == 1 || model.state == 3) {
 					(js_Boot.__cast(ballView , PIXI.AnimatedSprite)).gotoAndStop(model.animation.value | 0);
 				} else {
 					var text = this.texts[i];
-					text.x = model.x - 0.5 * text.width + 1 + dx;
-					text.y = model.y - 0.5 * text.height - 3 + dy;
+					text.x = model.x - 0.5 * text.width + dx;
+					text.y = model.y - 0.5 * text.height + dy;
 				}
 			}
 		}
@@ -1269,6 +1280,13 @@ Game.prototype = {
 		var anim = new PIXI.AnimatedSprite(Reflect.field(this.loader.resources["imgs/explosion.json"].spritesheet.animations,"explosion"));
 		anim.loop = false;
 		anim.scale.x = anim.scale.y = 0.6;
+		anim.animationSpeed = 0.5;
+		return anim;
+	}
+	,createDyingView: function() {
+		var anim = new PIXI.AnimatedSprite(Reflect.field(this.loader.resources["imgs/dying.json"].spritesheet.animations,"dying"));
+		anim.loop = false;
+		anim.scale.x = anim.scale.y = 1;
 		anim.animationSpeed = 0.5;
 		return anim;
 	}
