@@ -1128,11 +1128,11 @@ Game.prototype = {
 			this.daub(upIndex,true);
 		}
 	}
-	,update: function() {
+	,update: function(delta) {
 		if(!this.active) {
 			return;
 		}
-		this.space.step(0.017);
+		this.space.step(delta / 1000);
 		var _g = 0;
 		while(_g < 25) {
 			var i = _g++;
@@ -1167,7 +1167,7 @@ Game.prototype = {
 				model.y = _this4.zpp_inner.y;
 			}
 			if(model.animation != null) {
-				model.animation.update(0.017);
+				model.animation.update(delta / 1000);
 				if(model.animation.finished) {
 					if(model.state == 1 || model.state == 3) {
 						model.state = 4;
@@ -1180,7 +1180,7 @@ Game.prototype = {
 				}
 			}
 		}
-		this.time += 17;
+		this.time += delta;
 		if(this.time >= this.callerPeriod) {
 			this.time -= this.callerPeriod;
 			this.callNumber();
@@ -1419,9 +1419,10 @@ Main.startRendering = function() {
 };
 Main.drawFrame = function(timestamp) {
 	Main.graphics.clear();
-	Main.game.update();
+	Main.game.update(timestamp - Main.oldTimestamp);
 	Main.game.render(Main.graphics);
 	window.requestAnimationFrame(Main.drawFrame);
+	Main.oldTimestamp = timestamp;
 };
 Main.onClick = function(event) {
 	Main.game.click(event.data.global.x,event.data.global.y);
@@ -42629,6 +42630,7 @@ var Bool = Boolean;
 var Class = { };
 var Enum = { };
 js_Boot.__toStr = ({ }).toString;
+Main.oldTimestamp = 0.0;
 nape_Config.epsilon = 1e-8;
 nape_Config.fluidAngularDragFriction = 2.5;
 nape_Config.fluidAngularDrag = 100;
