@@ -6,8 +6,9 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
-var BallModel = function(type) {
+var BallModel = function(type,number) {
 	this.type = type;
+	this.number = number;
 	this.state = 0;
 };
 BallModel.__name__ = true;
@@ -33,10 +34,16 @@ Animation.prototype = {
 	,__class__: Animation
 };
 var Game = function(stage) {
+	this.callerBallGap = 10;
+	this.calledNumberViews = [];
+	this.time = 0;
+	this.callerPeriod = 1000;
+	this.numbers = [];
 	this.active = false;
 	this.ballModels = [];
 	this.ballViews = [];
 	this.d = 50;
+	this.viewWidth = 800;
 	this.texts = [];
 	this.circles = [];
 	this.loader = new PIXI.Loader();
@@ -46,6 +53,10 @@ var Game = function(stage) {
 	this.bombContainer = new PIXI.Container();
 	this.numbersContainer = new PIXI.Container();
 	this.effectsContainer = new PIXI.Container();
+	var _g = [];
+	var _g1 = 0;
+	while(_g1 < 75) _g.push(_g1++ + 1);
+	this.numbers = _g;
 };
 Game.__name__ = true;
 Game.prototype = {
@@ -138,7 +149,7 @@ Game.prototype = {
 		} else {
 			_this.unshift(obj1);
 		}
-		var left = 0.5 * (800 - 5 * (this.d + 1)) | 0;
+		var left = 0.5 * (this.viewWidth - 5 * (this.d + 1)) | 0;
 		this.card = this.createCardView();
 		this.card.position.x = left + (2.5 * (this.d + 1) | 0);
 		this.card.position.y = 500 - (2.5 * this.d | 0) + 10;
@@ -333,14 +344,40 @@ Game.prototype = {
 			_this1.unshift(linesCb);
 		}
 		var pickedNumbers = [];
+		var getRandom = function(arr,max) {
+			var num = 0;
+			while(true) {
+				num = Std.random(max);
+				if(!(arr.indexOf(num) > -1)) {
+					break;
+				}
+			}
+			return num;
+		};
+		var bombIndexes = [];
+		bombIndexes.push(getRandom(bombIndexes,25));
+		bombIndexes.push(getRandom(bombIndexes,25));
+		var stoneIndexes = [];
+		stoneIndexes.push(getRandom(bombIndexes.concat(stoneIndexes),25));
+		stoneIndexes.push(getRandom(bombIndexes.concat(stoneIndexes),25));
 		var _g = 0;
 		while(_g < 5) {
 			var i = _g++;
 			var _g1 = 0;
 			while(_g1 < 5) {
 				var j = _g1++;
-				var ballTypeRandom = Math.random();
-				var ballModel = new BallModel(ballTypeRandom < 0.05 ? 3 : ballTypeRandom < 0.1 ? 2 : 0);
+				Math.random();
+				var index = i * 5 + j;
+				var ballType = bombIndexes.indexOf(index) > -1 ? 3 : stoneIndexes.indexOf(index) > -1 ? 2 : 0;
+				var num = 0;
+				while(true) {
+					num = i * 15 + Std.random(15) + 1;
+					if(!(pickedNumbers.indexOf(num) != -1)) {
+						break;
+					}
+				}
+				pickedNumbers.push(num);
+				var ballModel = new BallModel(ballType,num);
 				this.ballModels.push(ballModel);
 				var circle = this.addCircle(left + ((0.5 + i) * (this.d + 1) | 0),500 - ((0.5 + j) * this.d | 0),this.d * 0.5 | 0);
 				var _this = circle.zpp_inner.body != null ? circle.zpp_inner.body.outer : null;
@@ -354,14 +391,6 @@ Game.prototype = {
 					_this1.unshift(ballCb);
 				}
 				this.circles.push(circle);
-				var num = 0;
-				while(true) {
-					num = i * 15 + Std.random(15) + 1;
-					if(!(pickedNumbers.indexOf(num) != -1)) {
-						break;
-					}
-				}
-				pickedNumbers.push(num);
 				var ballView = this.createBallView(ballModel.type);
 				this.ballViews.push(ballView);
 				if(ballModel.type == 3) {
@@ -369,7 +398,8 @@ Game.prototype = {
 				} else {
 					this.ballsContainer.addChild(ballView);
 				}
-				var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 0, align : "center"});
+				var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 16777215, align : "center"});
+				text.tint = 0;
 				this.texts.push(text);
 				this.numbersContainer.addChild(text);
 			}
@@ -460,6 +490,29 @@ Game.prototype = {
 			}
 		},100);
 		this.active = true;
+		this.startCalling();
+	}
+	,startCalling: function() {
+		this.time = 0;
+		this.callNumber();
+	}
+	,callNumber: function() {
+		if(this.numbers.length == 0) {
+			this.active = false;
+			return;
+		}
+		var num = this.numbers[Std.random(this.numbers.length)];
+		HxOverrides.remove(this.numbers,num);
+		var container = new PIXI.Container();
+		container.addChild(this.createBallView(0));
+		var text = new PIXI.Text(num == null ? "null" : "" + num,{ fontFamily : "Arial", fontSize : 24, fill : 0, align : "center"});
+		text.x = -0.5 * text.width;
+		text.y = -0.5 * text.height;
+		container.addChild(text);
+		container.position.x = 0;
+		container.position.y = 100;
+		this.stage.addChild(container);
+		this.calledNumberViews.unshift(container);
 	}
 	,addCircle: function(x,y,r) {
 		var body = new nape_phys_Body();
@@ -785,7 +838,9 @@ Game.prototype = {
 			var shape = _g.zpp_inner.at(_g.zpp_i++).zpp_inner.wrap_shapes.at(0);
 			var index = this.circles.indexOf(shape);
 			if(index > -1) {
-				this.daub(index);
+				if(this.numbers.indexOf(this.ballModels[index].number) == -1) {
+					this.daub(index);
+				}
 			}
 		}
 	}
@@ -830,7 +885,7 @@ Game.prototype = {
 	}
 	,explode: function(index) {
 		var _gthis = this;
-		console.log("src/Game.hx:328:","Explode!");
+		console.log("src/Game.hx:397:","Explode!");
 		var crack = function(map,i,j) {
 			if(i > -1 && i < 5 && j > -1 && j < 5 && j < map[i].length) {
 				var ballModel = map[i][j];
@@ -1023,7 +1078,7 @@ Game.prototype = {
 		this.active = false;
 	}
 	,onBallsCollision: function(cb) {
-		console.log("src/Game.hx:407:","balls collision!");
+		console.log("src/Game.hx:476:","balls collision!");
 		this.processCollision(cb.zpp_inner.int1.outer_i,cb.zpp_inner.int2.outer_i);
 	}
 	,processCollision: function(body1,body2) {
@@ -1077,7 +1132,7 @@ Game.prototype = {
 		if(!this.active) {
 			return;
 		}
-		this.space.step(0.016666666666666666);
+		this.space.step(0.017);
 		var _g = 0;
 		while(_g < 25) {
 			var i = _g++;
@@ -1112,7 +1167,7 @@ Game.prototype = {
 				model.y = _this4.zpp_inner.y;
 			}
 			if(model.animation != null) {
-				model.animation.update(0.016666666666666666);
+				model.animation.update(0.017);
 				if(model.animation.finished) {
 					if(model.state == 1 || model.state == 3) {
 						model.state = 4;
@@ -1124,6 +1179,11 @@ Game.prototype = {
 					model.animation = null;
 				}
 			}
+		}
+		this.time += 17;
+		if(this.time >= this.callerPeriod) {
+			this.time -= this.callerPeriod;
+			this.callNumber();
 		}
 	}
 	,render: function(graphics) {
@@ -1174,6 +1234,10 @@ Game.prototype = {
 					(js_Boot.__cast(ballView , PIXI.AnimatedSprite)).gotoAndStop(model.animation.value | 0);
 				} else {
 					var text = this.texts[i];
+					if(this.numbers.indexOf(model.number) == -1) {
+						var t = this.time % 600;
+						text.tint = this.rgb2hex((t < 300 ? t / 300 * 255 : (2 - t / 300) * 255) | 0);
+					}
 					text.x = model.x - 0.5 * text.width + dx;
 					text.y = model.y - 0.5 * text.height + dy;
 				}
@@ -1237,6 +1301,23 @@ Game.prototype = {
 				this.blitzy.scale.x = -1;
 			}
 		}
+		var _g = 0;
+		var _g1 = this.calledNumberViews.length;
+		while(_g < _g1) {
+			var i = _g++;
+			var view = this.calledNumberViews[i];
+			if(i == 0) {
+				if(this.time < 100) {
+					view.x = this.viewWidth * 0.5 * (this.time / 100) - (this.d / 2 | 0);
+					view.width = view.height = this.d + this.d * (this.time / 100);
+				} else {
+					view.width = view.height = this.d + this.d * (1 - (this.time - 100) / (this.callerPeriod - 100));
+					view.x = this.viewWidth * 0.5 + 1.5 * (this.d + this.callerBallGap) * (this.time - 100) / (this.callerPeriod - 100) - (this.d / 2 | 0);
+				}
+			} else {
+				view.x = this.viewWidth * 0.5 + (0.5 + i + this.time / this.callerPeriod) * (this.d + this.callerBallGap) - (this.d / 2 | 0);
+			}
+		}
 	}
 	,createBorderView: function() {
 		var sprite = new PIXI.Sprite(this.loader.resources["imgs/block.png"].texture);
@@ -1263,7 +1344,7 @@ Game.prototype = {
 		}
 		sprite.pivot.x = sprite.texture.width * 0.5;
 		sprite.pivot.y = sprite.texture.height * 0.5;
-		sprite.scale.x = sprite.scale.y = 0.155;
+		sprite.width = sprite.height = this.d;
 		return sprite;
 	}
 	,createCardView: function() {
@@ -1302,7 +1383,23 @@ Game.prototype = {
 		anim.animationSpeed = 0.5;
 		return anim;
 	}
+	,rgb2hex: function(c) {
+		return c << 16 | c << 8 | c;
+	}
 	,__class__: Game
+};
+var HxOverrides = function() { };
+HxOverrides.__name__ = true;
+HxOverrides.remove = function(a,obj) {
+	var i = a.indexOf(obj);
+	if(i == -1) {
+		return false;
+	}
+	a.splice(i,1);
+	return true;
+};
+HxOverrides.now = function() {
+	return Date.now();
 };
 var Main = function() { };
 Main.__name__ = true;
@@ -42517,6 +42614,9 @@ zpp_$nape_util_ZPP_$Set_$ZPP_$CbSetPair.prototype = {
 var $_;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $global.$haxeUID++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = m.bind(o); o.hx__closures__[m.__id__] = f; } return f; }
 $global.$haxeUID |= 0;
+if(typeof(performance) != "undefined" ? typeof(performance.now) == "function" : false) {
+	HxOverrides.now = performance.now.bind(performance);
+}
 String.prototype.__class__ = String;
 String.__name__ = true;
 Array.__name__ = true;
