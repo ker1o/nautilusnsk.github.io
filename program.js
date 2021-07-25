@@ -1234,12 +1234,14 @@ Game.prototype = {
 					(js_Boot.__cast(ballView , PIXI.AnimatedSprite)).gotoAndStop(model.animation.value | 0);
 				} else {
 					var text = this.texts[i];
-					if(this.numbers.indexOf(model.number) == -1) {
-						var t = this.time % 600;
-						text.tint = this.rgb2hex((t < 300 ? t / 300 * 255 : (2 - t / 300) * 255) | 0);
+					if(text != null) {
+						if(this.numbers.indexOf(model.number) == -1) {
+							var t = this.time % 600;
+							text.tint = this.rgb2hex((t < 300 ? t / 300 * 255 : (2 - t / 300) * 255) | 0);
+						}
+						text.x = model.x - 0.5 * text.width + dx;
+						text.y = model.y - 0.5 * text.height + dy;
 					}
-					text.x = model.x - 0.5 * text.width + dx;
-					text.y = model.y - 0.5 * text.height + dy;
 				}
 			}
 		}
