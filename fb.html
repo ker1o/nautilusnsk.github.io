@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>FB logout test</title>
+
+<script>
+(function(d, s, id) {
+	var js, fjs = d.getElementsByTagName(s)[0];
+	if (d.getElementById(id)) return;
+	js = d.createElement(s); js.id = id;
+	js.src = "https://connect.facebook.net/en_US/sdk.js";
+	fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+
+window.fbAsyncInit = function() {
+	FB.init({
+		appId      : '5435917666483409', // put yours
+		cookie     : true,
+		status     : true,
+		xfbml      : true,
+		version    : "v9.0"
+	});
+
+	getFbLoginStatus();
+};
+
+function updateFbStatus(response) {
+	document.getElementById("fbStatusArea").value = JSON.stringify(response);
+}
+
+function getFbLoginStatus() {
+	FB.getLoginStatus(updateFbStatus);
+}
+
+function fbLogin() {
+	FB.login(updateFbStatus);
+}
+
+function fbLogout() {
+	FB.logout(updateFbStatus);
+}
+
+</script>
+
+</head>
+<body>
+<div>
+	<button type="button" onclick="getFbLoginStatus()">FB Login Status</button>
+	<br/>
+	<textarea id="fbStatusArea" rows="5" cols="50"></textarea>
+</div>
+<br/>
+<div>
+	<button type="button" onclick="fbLogin()">Login</button>
+	<button type="button" onclick="fbLogout()">Logout</button>
+</div>
+
+</body>
+</html>
