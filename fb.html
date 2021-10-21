@@ -14,7 +14,7 @@
 
 window.fbAsyncInit = function() {
 	FB.init({
-		appId      : '5435917666483409', // put yours
+		appId      : '167713269916972', // preprod
 		cookie     : true,
 		status     : true,
 		xfbml      : true,
@@ -40,6 +40,11 @@ function fbLogout() {
 	FB.logout(updateFbStatus);
 }
 
+function getPermissions() {
+	FB.api("/me/permissions", (response) => {
+		document.getElementById("fbStatusArea").value = JSON.stringify(response);
+	});
+}
 </script>
 
 </head>
@@ -53,6 +58,10 @@ function fbLogout() {
 <div>
 	<button type="button" onclick="fbLogin()">Login</button>
 	<button type="button" onclick="fbLogout()">Logout</button>
+</div>
+
+<div>
+	<button type="button" onclick="getPermissions()">Get Permissions</button>
 </div>
 
 </body>
