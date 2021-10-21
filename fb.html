@@ -33,7 +33,7 @@ function getFbLoginStatus() {
 }
 
 function fbLogin() {
-	FB.login(updateFbStatus);
+	FB.login(updateFbStatus, {scope: 'user_friends'});
 }
 
 function fbLogout() {
