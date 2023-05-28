@@ -1,0 +1,51 @@
+{
+  "name": "PWA Test",
+  "short_name": "PWA Test",
+  "description": "PWA Test",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "ms_start_compatible": true,
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "landscape",
+  "background_color": "#00227d",
+  "theme_color": "#1c00ad",
+  "icons": [
+    {
+      "src": "/icons/pwa_72.png",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa_192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa_512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Bingo Blitz Web Preprod",
+      "short_name": "Bingo Blitz Web Preprod",
+      "description": "Bingo is Bingo Everywhere!",
+      "url": "/?mode=standalone",
+      "icons": [
+        {
+          "src": "/bingo2-v2-bingoblitz/js/bingoblitz/pwa/assets/icons/bbm_pwa_192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
