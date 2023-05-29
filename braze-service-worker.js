@@ -669,7 +669,7 @@ self.addEventListener("notificationclick", function(a) {
         var d;
         null != e && "" !== e && (d = clients.matchAll({
             type: "window"
-        }).then(function() {
+        }).then(function(clientList) {
 			for (client of clientList) {
 				if (client.focus) {
 					client.focus();
