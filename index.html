@@ -12,6 +12,15 @@
 	}(window,document,'script');
 	</script>
 	
+	<style>
+		#myNumber{
+			font-size:100px;
+			text-align:center;
+			margin:50px auto;
+			font-family:Arial, sans-serif;
+		}	
+	</style>
+	
 	<script>
 		async function registerServiceWorker(path, scope) {
 			const registration = await navigator.serviceWorker.register(path, {scope: scope});
@@ -19,6 +28,8 @@
 		}
 	
 		async function onLoad() {
+			document.getElementById("myNumber").innerHTML = (Math.random() * 100) | 0;
+		
 			navigator.serviceWorker.addEventListener("message", (event) => {
 				alert(`!!! ${event.data}`);
 			});
@@ -64,5 +75,6 @@
   </head>
   <body onload="onLoad()">
 	<button id="btnSubscribe">Subscribe</button>
+	<div id="myNumber"></div>
   </body>
 </html>
