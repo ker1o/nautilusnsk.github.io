@@ -20,9 +20,8 @@
 	
 		async function onLoad() {
 			navigator.serviceWorker.addEventListener("message", (event) => {
-				console.log(`[Notification] ${event.data}`);
+				alert(`!!! ${event.data}`);
 			});
-		
 		
 			const swCustomName = "service-worker.js";
 			const swScope = "/";
