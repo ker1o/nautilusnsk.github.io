@@ -67,12 +67,27 @@
 					console.log(`User ${temporary ? "temporarily dismissed" : "permanently denied"} push prompt`);
 				});
 			};
+
+			document.getElementById("btnReset").onclick = async function(){
+				const registration = await navigator.serviceWorker.getRegistration(swScope);
+				if (registration != null) {
+					const activeScriptUrl = registration.active.scriptURL;
+					console.log(`Unregister: ` + JSON.stringify(activeScriptUrl));
+					await registration.unregister();
+					console.log(`And register ${swCustomName} again`);
+					await registerServiceWorker(swCustomName, swScope);
+				}			
+			};
 		}
 	</script>
 	
   </head>
   <body onload="onLoad()">
 	<button id="btnSubscribe">Subscribe</button>
+	<br/>
+	<br/>
+	<br/>
+	<button id="btnReset">Reset SW</button>
 	<div id="myNumber"></div>
   </body>
 </html>
