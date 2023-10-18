@@ -25,15 +25,6 @@
 		async function registerServiceWorker(path, scope) {
 			const registration = await navigator.serviceWorker.register(path, {scope: scope});
 			console.log(`Service Worker ${registration} has been registered for Scope: ${registration.scope}`);
-
-			console.log(`Permission is granted: ${braze.isPushPermissionGranted()}`);
-			if (braze.isPushPermissionGranted()) {
-				braze.requestPushPermission(() => {
-					console.log(`User accepted push prompt`);
-				}, (temporary) => {
-					console.log(`User ${temporary ? "temporarily dismissed" : "permanently denied"} push prompt`);
-				});						
-			}					
 		}
 	
 		async function onLoad() {
@@ -68,6 +59,15 @@
 
 			// Be sure to call `openSession` after `automaticallyShowInAppMessages`
 			braze.openSession();
+
+			console.log(`Permission is granted: ${braze.isPushPermissionGranted()}`);
+			if (braze.isPushPermissionGranted()) {
+				braze.requestPushPermission(() => {
+					console.log(`User accepted push prompt`);
+				}, (temporary) => {
+					console.log(`User ${temporary ? "temporarily dismissed" : "permanently denied"} push prompt`);
+				});						
+			}	
 			
 			document.getElementById("btnSubscribe").onclick = function(){
 				braze.requestPushPermission(() => {
